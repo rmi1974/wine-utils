@@ -83,6 +83,9 @@ def main():
                            type=str,
                            default="",
                            help="specify the cross-toolchain prefix")
+    my_parser.add_argument("--disable-mingw",
+                           action="store_true",
+                           help="do not use the MinGW cross-compiler for building Wine")
     my_parser.add_argument("--enable-mscoree",
                            action="store_true",
                            help="enable Wine-Mono")
@@ -119,6 +122,8 @@ def main():
     ##################################################################
     # default options passed to 'configure'
     configure_options = ""
+    # - MinGW cross-compiler
+    configure_options += " --without-mingw" if args.disable_mingw else " --with-mingw"
     # - Wine-Mono disabled by default
     configure_options += " --enable-mscoree" if args.enable_mscoree else " --disable-mscoree"
     # - Tests not built by default
