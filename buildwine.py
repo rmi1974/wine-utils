@@ -271,30 +271,29 @@ def main():
         if not os.path.exists(wine_staging_patches_path):
             subprocess.run("git clone {0} {1}".format(WINE_STAGING_GIT_URI, wine_staging_patches_path),
                            check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+        else:
+            subprocess.run("git fetch --all", cwd=wine_staging_patches_path,
+                           check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
 
-        # reset staging patches source tree unless specified otherwise
+        if not os.path.exists(wine_variant_source_path):
+            subprocess.run("git clone {0} {1}".format(wine_mainline_source_path, wine_variant_source_path),
+                           check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+        else:
+            subprocess.run("git fetch --all", cwd=wine_variant_source_path,
+                           check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+
         if not args.no_reset_source:
             if args.version:
                 # reset source tree to specific version
                 subprocess.run("git reset --hard v{0}".format(args.version), cwd=wine_staging_patches_path,
                                check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
-            else:
-                # reset source tree to where upstream points to
-                subprocess.run("git reset --hard @{upstream}", cwd=wine_staging_patches_path,
-                               check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
-
-        # clone mainsource source tree in order to apply staging patches if not exist
-        if not os.path.exists(wine_variant_source_path):
-            subprocess.run("git clone {0} {1}".format(wine_mainline_source_path, wine_variant_source_path),
-                           check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
-
-        # reset cloned mainline source tree in order to apply staging patches
-        if args.no_reset_source:
-            if args.version:
                 # reset source tree to specific version
                 subprocess.run("git reset --hard wine-{0}".format(args.version), cwd=wine_variant_source_path,
                                check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
             else:
+                # reset source tree to where upstream points to
+                subprocess.run("git reset --hard @{upstream}", cwd=wine_staging_patches_path,
+                               check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
                 # reset source tree to where upstream points to
                 subprocess.run("git reset --hard @{upstream}", cwd=wine_variant_source_path,
                                check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
