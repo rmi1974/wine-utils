@@ -307,28 +307,36 @@ def main():
 
     ##################################################################
     # apply Wine build fixups for older Wine versions
-    if args.version:
+    wine_version = args.version
+    if not wine_version and args.variant == "custom":
+        # also apply fixups on custom versions
+        pipe = subprocess.Popen("git describe --abbrev=0 2> /dev/null | sed 's/wine-//'",
+                                cwd=wine_variant_source_path, shell=True, stdout=subprocess.PIPE, encoding="utf8").stdout
+        wine_version = pipe.readline().rstrip(os.linesep)
+        pipe.close()
+
+    if wine_version:
 
         # ERROR: tools/wrc/parser.y:2840:15: error: ‘YYLEX’ undeclared (first use in this function)
         #        and various other locations with problematic bison directives, see multi cherry-picks
         # URL: https://bugs.winehq.org/show_bug.cgi?id=34329
         # GIT: https://source.winehq.org/git/wine.git/commit/8fcac3b2bb8ce4cdbcffc126df779bf1be168882
         # FIXED: wine-1.7.0
-        if args.version >= StrictVersion("1.4") and args.version < StrictVersion("1.7.0"):
+        if wine_version >= StrictVersion("1.4") and wine_version < StrictVersion("1.7.0"):
             git_cherry_pick(wine_variant_source_path, "3f98185fb8f88c181877e909ab1b6422fb9bca1e")
             git_cherry_pick(wine_variant_source_path, "8fcac3b2bb8ce4cdbcffc126df779bf1be168882")
             git_cherry_pick(wine_variant_source_path, "bda5a2ffb833b2824325bd9361b30dbaf5f78068")
             git_cherry_pick(wine_variant_source_path, "f86c46f6403fe338a544ab134bdf563c5b0934ae")
             git_cherry_pick(wine_variant_source_path, "ffbe1ca986bd299e1fc894440849914378adbf5c")
 
-        if args.version >= StrictVersion("1.5.10") and args.version < StrictVersion("1.7.0"):
+        if wine_version >= StrictVersion("1.5.10") and wine_version < StrictVersion("1.7.0"):
             git_cherry_pick(wine_variant_source_path, "c14e322a92a24e704836c5c12207c694a30e805f")
 
         # ERROR: err:msidb:get_tablecolumns column 1 out of range (gcc 4.9+ problem, breaks msi installers)
         # URL: https://bugs.winehq.org/show_bug.cgi?id=36139
         # GIT: https://source.winehq.org/git/wine.git/commit/deb274226783ab886bdb44876944e156757efe2b
         # FIXED: wine-1.7.20
-        if args.version >= StrictVersion("1.4") and args.version < StrictVersion("1.7.20"):
+        if wine_version >= StrictVersion("1.4") and wine_version < StrictVersion("1.7.20"):
             git_cherry_pick(wine_variant_source_path, "deb274226783ab886bdb44876944e156757efe2b")
 
         # ERROR: dlls/wineps.drv/psdrv.h:389:5: error: unknown type name ‘PSDRV_DEVMODEA’
@@ -337,7 +345,7 @@ def main():
         # GIT-start: https://source.winehq.org/git/wine.git/commit/d963a8f864a495f7230dc6fe717d71e61ae51d67
         # GIT-end: https://source.winehq.org/git/wine.git/commit/72cfc219f0ba2fc3aea19760558f7820f4883176
         # GIT: https://source.winehq.org/git/wine.git/commit/bdaddc4b7c4b4391b593a5f4ab91b8121c698bef
-        if args.version >= StrictVersion("1.4") and args.version < StrictVersion("1.5.10"):
+        if wine_version >= StrictVersion("1.4") and wine_version < StrictVersion("1.5.10"):
             # Way too many cherry-picks for fixing this, even across modules. Disable module.
             configure_options += " --disable-wineps.drv"
 
@@ -345,20 +353,20 @@ def main():
         # URL: https://bugs.winehq.org/show_bug.cgi?id=40851
         # GIT: https://source.winehq.org/git/wine.git/commit/10065d2acd0a9e1e852a8151c95569b99d1b3294
         # FIXED: wine-1.9.14
-        if args.version >= StrictVersion("1.4") and args.version < StrictVersion("1.9.14"):
+        if wine_version >= StrictVersion("1.4") and wine_version < StrictVersion("1.9.14"):
             git_cherry_pick(wine_variant_source_path, "10065d2acd0a9e1e852a8151c95569b99d1b3294")
 
         # ERROR: dlls/secur32/schannel_gnutls.c:45:12: error: conflicting types for ‘gnutls_cipher_get_block_size’
         # URL: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=832275
         # GIT: https://source.winehq.org/git/wine.git/commit/bf5ac531a030bce9e798ab66bc53e84a65ca8fdb
         # FIXED: wine-1.9.13
-        if args.version >= StrictVersion("1.7.49") and args.version < StrictVersion("1.9.13"):
+        if wine_version >= StrictVersion("1.7.49") and wine_version < StrictVersion("1.9.13"):
             git_cherry_pick(wine_variant_source_path, "bf5ac531a030bce9e798ab66bc53e84a65ca8fdb")
 
         # ERROR: include/winsock.h:401: warning: "INVALID_SOCKET" redefined
         # GIT: https://source.winehq.org/git/wine.git/commit/28173f06932edd85a64a952120d29b9bb1e762ea
         # FIXED: wine-2.13
-        if args.version >= StrictVersion("1.7.6") and args.version < StrictVersion("2.13"):
+        if wine_version >= StrictVersion("1.7.6") and wine_version < StrictVersion("2.13"):
             git_cherry_pick(wine_variant_source_path, "28173f06932edd85a64a952120d29b9bb1e762ea")
 
     ##################################################################
