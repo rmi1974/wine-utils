@@ -56,7 +56,7 @@ def git_cherry_pick(source_path, commit_id):
         return
 
     # FIXME: will generate new sha1
-    run_command("git cherry-pick --strategy=recursive -X theirs -x {0}".format(commit_id), source_path)
+    run_command("git cherry-pick --keep-redundant-commits --strategy=recursive -X theirs -x {0}".format(commit_id), source_path)
 
 def main():
 
