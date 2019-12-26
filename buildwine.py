@@ -15,6 +15,23 @@ from distutils.version import StrictVersion
 WINE_MAINLINE_GIT_URI = "git://source.winehq.org/git/wine.git"
 WINE_STAGING_GIT_URI = "https://github.com/wine-staging/wine-staging.git"
 
+def run_command(command, cwd=None, env=None):
+    """Run the specified command in a subprocess shell.
+
+    Parameters:
+        command (str): Linux shell command.
+        cwd (str): Working directory for the command.
+        env (str): Custom shell environment for the intermediate shell.
+    Returns:
+        if executed process exit code is non-zero, raises a CalledProcessError.
+
+    """
+    print("[*] Running following command")
+    print("'{0}' (cwd='{1}')".format( command, cwd))
+
+    # Some commands involve 'tee' (pipelines) hence prefix with 'pipefail' to capture failure as well
+    subprocess.run("set -o pipefail && {0}".format(command), cwd=cwd, env=env, check=True, shell=True,
+                    stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
 
 def git_cherry_pick(source_path, commit_id):
     """ cherry-pick a Git commit into current branch
@@ -39,10 +56,7 @@ def git_cherry_pick(source_path, commit_id):
         return
 
     # FIXME: will generate new sha1
-    subprocess.run("git cherry-pick --strategy=recursive -X theirs -x {0}".format(commit_id),
-                   check=True, cwd=source_path, shell=True, stderr=sys.stderr,
-                   stdout=sys.stdout, encoding="utf8")
-
+    run_command("git cherry-pick --strategy=recursive -X theirs -x {0}".format(commit_id), source_path)
 
 def main():
 
@@ -252,56 +266,44 @@ def main():
         wine_local_clone_source = "{0}/mainline-src".format(wine_workspace_path)
         if not os.path.exists(wine_local_clone_source):
             # use Internet
-            subprocess.run("git clone {0} {1}".format(WINE_MAINLINE_GIT_URI, wine_local_clone_source),
-                           check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+            run_command("git clone {0} {1}".format(WINE_MAINLINE_GIT_URI, wine_local_clone_source))
 
-        subprocess.run("git clone {0} {1}".format(wine_local_clone_source, wine_mainline_source_path),
-                       check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+        run_command("git clone {0} {1}".format(wine_local_clone_source, wine_mainline_source_path))
 
     # reset main source tree when version has been specified
     if args.version and not args.no_reset_source:
         # reset the tree to specific version
-        subprocess.run("git reset --hard wine-{0}".format(args.version), cwd=wine_mainline_source_path,
-                       check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+        run_command("git reset --hard wine-{0}".format(args.version), wine_mainline_source_path)
 
     ##################################################################
     # Wine-Staging: set up two source source tree: upstream repo + mainline-patched-with-staging
     if args.variant == "staging":
 
         if not os.path.exists(wine_staging_patches_path):
-            subprocess.run("git clone {0} {1}".format(WINE_STAGING_GIT_URI, wine_staging_patches_path),
-                           check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+            run_command("git clone {0} {1}".format(WINE_STAGING_GIT_URI, wine_staging_patches_path))
         else:
-            subprocess.run("git fetch --all", cwd=wine_staging_patches_path,
-                           check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+            run_command("git fetch --all", cwd=wine_staging_patches_path)
 
         if not os.path.exists(wine_variant_source_path):
-            subprocess.run("git clone {0} {1}".format(wine_mainline_source_path, wine_variant_source_path),
-                           check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+            run_command("git clone {0} {1}".format(wine_mainline_source_path, wine_variant_source_path))
         else:
-            subprocess.run("git fetch --all", cwd=wine_variant_source_path,
-                           check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+            run_command("git fetch --all", cwd=wine_variant_source_path)
 
         if not args.no_reset_source:
             if args.version:
                 # reset source tree to specific version
-                subprocess.run("git reset --hard v{0}".format(args.version), cwd=wine_staging_patches_path,
-                               check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+                run_command("git reset --hard v{0}".format(args.version), wine_staging_patches_path)
                 # reset source tree to specific version
-                subprocess.run("git reset --hard wine-{0}".format(args.version), cwd=wine_variant_source_path,
-                               check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+                run_command("git reset --hard wine-{0}".format(args.version), wine_variant_source_path)
             else:
                 # reset source tree to where upstream points to
-                subprocess.run("git reset --hard @{upstream}", cwd=wine_staging_patches_path,
-                               check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+                run_command("git reset --hard @{upstream}", wine_staging_patches_path)
                 # reset source tree to where upstream points to
-                subprocess.run("git reset --hard @{upstream}", cwd=wine_variant_source_path,
-                               check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+                run_command("git reset --hard @{upstream}", wine_variant_source_path)
 
         # apply staging patches to the clone
-        subprocess.run("{0}/patches/patchinstall.sh DESTDIR={1} --backend=git --force-autoconf --all".format(
-            wine_staging_patches_path, wine_variant_source_path),
-            check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+        run_command("{0}/patches/patchinstall.sh DESTDIR={1} --backend=git --force-autoconf --all".format(
+            wine_staging_patches_path, wine_variant_source_path))
 
     ##################################################################
     # apply Wine build fixups for older Wine versions
@@ -374,11 +376,9 @@ def main():
     if args.force_autoconf:
 
         # update configure scripts
-        subprocess.run("autoreconf -f", cwd=wine_variant_source_path,
-                       check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+        run_command("autoreconf -f", wine_variant_source_path)
         # update wineserver protocol
-        subprocess.run("./tools/make_requests", cwd=wine_variant_source_path,
-                       check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+        run_command("./tools/make_requests", wine_variant_source_path)
 
     ##################################################################
     # build and install 64-bit Wine
@@ -393,19 +393,13 @@ def main():
 
         if not args.no_configure:
 
-            subprocess.run("{0}/configure --prefix={1} {2} {3} --enable-win64 2>&1 | tee {4}".format(
+            run_command("{0}/configure --prefix={1} {2} {3} --enable-win64 2>&1 | tee {4}".format(
                 wine_variant_source_path, wine_install_prefix, wine_cross_compile_options,
-                configure_options, logfile),
-                cwd=wine_build_target_arch64_path, env=my_env,
-                check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+                configure_options, logfile), wine_build_target_arch64_path, my_env)
 
-        subprocess.run("make 2>&1 | tee -a {0}".format(logfile),
-            cwd=wine_build_target_arch64_path, env=my_env,
-            check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+        run_command("make 2>&1 | tee -a {0}".format(logfile), wine_build_target_arch64_path, my_env)
 
-        subprocess.run("make install | tee -a {0}".format(logfile),
-            cwd=wine_build_target_arch64_path, env=my_env,
-            check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+        run_command("make install | tee -a {0}".format(logfile), wine_build_target_arch64_path, my_env)
 
     ##################################################################
     # build and install 32-bit Wine
@@ -420,19 +414,13 @@ def main():
 
         if not args.no_configure:
 
-            subprocess.run("{0}/configure --prefix={1} {2} {3} --with-wine64={4} 2>&1 | tee {5}".format(
+            run_command("{0}/configure --prefix={1} {2} {3} --with-wine64={4} 2>&1 | tee {5}".format(
                 wine_variant_source_path, wine_install_prefix, wine_cross_compile_options,
-                configure_options, wine_build_target_arch64_path, logfile),
-                cwd=wine_build_target_arch32_path, env=my_env,
-                check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+                configure_options, wine_build_target_arch64_path, logfile), wine_build_target_arch32_path, my_env)
 
-        subprocess.run("make 2>&1 | tee -a {0}".format(logfile),
-            cwd=wine_build_target_arch32_path, env=my_env,
-            check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+        run_command("make 2>&1 | tee -a {0}".format(logfile), wine_build_target_arch32_path, my_env)
 
-        subprocess.run("make install | tee -a {0}".format(logfile),
-            cwd=wine_build_target_arch32_path, env=my_env,
-            check=True, shell=True, stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+        run_command("make install | tee -a {0}".format(logfile), wine_build_target_arch32_path, my_env)
 
         # make a lib32 symlink to lib to allow winegcc -m32
         # relative so the prefix can be moved around
