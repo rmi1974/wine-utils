@@ -350,7 +350,7 @@ def main():
         # URL: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=832275
         # GIT: https://source.winehq.org/git/wine.git/commit/bf5ac531a030bce9e798ab66bc53e84a65ca8fdb
         # FIXED: wine-1.9.13
-        if args.version >= StrictVersion("1.8") and args.version < StrictVersion("1.9.13"):
+        if args.version >= StrictVersion("1.7.49") and args.version < StrictVersion("1.9.13"):
             git_cherry_pick(wine_variant_source_path, "bf5ac531a030bce9e798ab66bc53e84a65ca8fdb")
 
         # ERROR: include/winsock.h:401: warning: "INVALID_SOCKET" redefined
