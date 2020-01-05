@@ -266,6 +266,7 @@ def main():
 
     # if LLVM based MinGW toolchain detected, enable additional features:
     # - generate debug symbols in PDB format
+    # - ASLR (dynamicbase)
     if not args.disable_mingw:
         if "aarch64" in wine_host_arch64:
             cc_list = ["aarch64-w64-mingw32-clang", "aarch64-w64-mingw32-gcc"]
@@ -284,6 +285,9 @@ def main():
                 # https://github.com/mstorsjo/llvm-mingw
                 my_env["CROSSCFLAGS"] = "-g -gcodeview -O2"
                 my_env["CROSSLDFLAGS"] = "-Wl,-pdb="
+                # Enable ASLR support
+                # Currently not supported by Wine loader: https://bugs.winehq.org/show_bug.cgi?id=48417
+                my_env["CROSSLDFLAGS"] += " -Wl,--dynamicbase"
                 break
 
     # target arch specific build and install paths
