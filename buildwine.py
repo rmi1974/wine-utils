@@ -264,6 +264,28 @@ def main():
         if args.enable_nopic:
             wine_cflags_target_arch32 = "-fno-PIC"
 
+    # if LLVM based MinGW toolchain detected, enable additional features:
+    # - generate debug symbols in PDB format
+    if not args.disable_mingw:
+        if "aarch64" in wine_host_arch64:
+            cc_list = ["aarch64-w64-mingw32-clang", "aarch64-w64-mingw32-gcc"]
+        elif "x86_64" in wine_host_arch64:
+            cc_list = ["x86_64-w64-mingw32-clang", "amd64-w64-mingw32-clang",
+                       "x86_64-pc-mingw32-gcc",  "amd64-pc-mingw32-gcc",
+                       "x86_64-w64-mingw32-gcc", "amd64-w64-mingw32-gcc",
+                       "x86_64-mingw32msvc-gcc", "amd64-mingw32msvc-gcc"]
+        else:
+            cc_list = []
+
+        cc_exists = lambda x: shutil.which(x) is not None
+        for cc_prog in cc_list:
+            if cc_exists(cc_prog) and "clang" in cc_prog:
+                # Enable llvm-mingw PDB support
+                # https://github.com/mstorsjo/llvm-mingw
+                my_env["CROSSCFLAGS"] = "-g -gcodeview -O2"
+                my_env["CROSSLDFLAGS"] = "-Wl,-pdb="
+                break
+
     # target arch specific build and install paths
     wine_build_target_arch32_path = ""
     wine_build_target_arch64_path = ""
