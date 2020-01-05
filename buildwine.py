@@ -169,8 +169,11 @@ def main():
     ##################################################################
     # default options passed to 'configure'
     configure_options = ""
-    # - MinGW cross-compiler
-    configure_options += " --without-mingw" if args.disable_mingw else " --with-mingw"
+    # - MinGW cross-compiler, option '--with-mingw' was added with Wine 4.6
+    if wine_version >= Version("4.6"):
+        configure_options += " --without-mingw" if args.disable_mingw else " --with-mingw"
+    else:
+        args.disable_mingw = True
     # - Wine-Mono disabled by default
     configure_options += " --enable-mscoree" if args.enable_mscoree else " --disable-mscoree"
     # - Tests not built by default
