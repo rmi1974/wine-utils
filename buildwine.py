@@ -313,18 +313,22 @@ def main():
             wine_workspace_path, args.variant, dash_version, wine_target_arch64)
 
     ##################################################################
-    # mainline source tree needs to be present for staging
+    # Set up mainline source tree clone. It also needs to be present for Wine-Staging.
     if not os.path.exists(wine_mainline_source_path):
 
-        # try to use un-versioned local clone to speed up checkout if present
-        wine_local_clone_source = "{0}/mainline-src".format(wine_workspace_path)
+        # local git mirror to speed up checkout and save disk space
+        wine_local_clone_source = "{0}/mainline-src-reference-gitmirror".format(wine_workspace_path)
         if not os.path.exists(wine_local_clone_source):
-            # use Internet
-            run_command("git clone {0} {1}".format(WINE_MAINLINE_GIT_URI, wine_local_clone_source))
+            # create local git mirror for the first time
+            run_command("git clone --mirror {0} {1}".format(WINE_MAINLINE_GIT_URI, wine_local_clone_source))
+        else:
+            # ensure local git mirror is up to date
+            run_command("git fetch --all", cwd=wine_local_clone_source)
 
-        run_command("git clone {0} {1}".format(wine_local_clone_source, wine_mainline_source_path))
+        # use '--shared' to speed up checkout and save disk space
+        run_command("git clone --shared {0} {1}".format(wine_local_clone_source, wine_mainline_source_path))
 
-    # reset main source tree when version has been specified
+    # reset mainline source tree when version has been specified
     if args.version and not args.no_reset_source:
         # reset the tree to specific version
         run_command("git reset --hard wine-{0}".format(args.version), wine_mainline_source_path)
