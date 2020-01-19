@@ -170,7 +170,8 @@ def main():
     # default options passed to 'configure'
     configure_options = ""
     # - MinGW cross-compiler, option '--with-mingw' was added with Wine 4.6
-    if wine_version >= Version("4.6"):
+    #   LLVM-based MinGW integration and PDB support is usable since Wine 5.0
+    if wine_version >= Version("5.0"):
         configure_options += " --without-mingw" if args.disable_mingw else " --with-mingw"
     else:
         args.disable_mingw = True
