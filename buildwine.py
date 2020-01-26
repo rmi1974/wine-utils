@@ -67,14 +67,15 @@ def git_cherry_pick(source_path, commit_id):
     # FIXME: will generate new sha1
     run_command("git cherry-pick --keep-redundant-commits --strategy=recursive -X theirs -x {0}".format(commit_id), source_path)
 
-def patch_apply(source_path, commit_id):
+def patch_apply(source_path, commit_id, exclude_pattern=""):
     """ Apply a patch from Git commit into current branch using 'patch' tool.
         The heuristics/fuzziness produces much better results with old Wine versions
-        than any git merge strategy.
+        than any git merge strategy. Optionally exclude parts of the patch.
 
     Parameters:
         source_path (str): Path to source repository.
         commit_id (str): Commit sha1 to generate patch from
+        exclude_pattern (str): Pattern for 'filterdiff' to exclude files
 
     Returns:
         none.
@@ -92,7 +93,7 @@ def patch_apply(source_path, commit_id):
         sys.exit("Patch extraction of '{0}' failed, aborting!".format(commit_id))
 
     # Try to apply the patch.
-    run_command("patch -p1 < {0}".format(patchfile), source_path)
+    run_command("filterdiff -p1 -x '{0}' < {1} | patch -p1".format(exclude_pattern, patchfile), source_path)
 
     # NOTE: keep .patch files in place for documentation
 
