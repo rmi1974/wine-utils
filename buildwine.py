@@ -434,7 +434,7 @@ def main():
     # GIT: https://source.winehq.org/git/wine.git/commit/10065d2acd0a9e1e852a8151c95569b99d1b3294
     # FIXED: wine-1.9.14
     if wine_version >= Version("1.4") and wine_version < Version("1.9.14"):
-        patch_apply(wine_variant_source_path, "10065d2acd0a9e1e852a8151c95569b99d1b3294")
+        patch_apply(wine_variant_source_path, "10065d2acd0a9e1e852a8151c95569b99d1b3294", "configure.ac")
 
     # ERROR: dlls/secur32/schannel_gnutls.c:45:12: error: conflicting types for ‘gnutls_cipher_get_block_size’
     # URL: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=832275
