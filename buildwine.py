@@ -402,7 +402,7 @@ def main():
     # URL: https://bugs.winehq.org/show_bug.cgi?id=34329
     # GIT: https://source.winehq.org/git/wine.git/commit/8fcac3b2bb8ce4cdbcffc126df779bf1be168882
     # FIXED: wine-1.7.0
-    if wine_version >= Version("1.4") and wine_version < Version("1.7.0"):
+    if wine_version >= Version("1.3.30") and wine_version < Version("1.7.0"):
         patch_apply(wine_variant_source_path, "3f98185fb8f88c181877e909ab1b6422fb9bca1e")
         patch_apply(wine_variant_source_path, "8fcac3b2bb8ce4cdbcffc126df779bf1be168882")
         patch_apply(wine_variant_source_path, "bda5a2ffb833b2824325bd9361b30dbaf5f78068")
@@ -416,7 +416,7 @@ def main():
     # URL: https://bugs.winehq.org/show_bug.cgi?id=36139
     # GIT: https://source.winehq.org/git/wine.git/commit/deb274226783ab886bdb44876944e156757efe2b
     # FIXED: wine-1.7.20
-    if wine_version >= Version("1.4") and wine_version < Version("1.7.20"):
+    if wine_version >= Version("1.3.30") and wine_version < Version("1.7.20"):
         patch_apply(wine_variant_source_path, "deb274226783ab886bdb44876944e156757efe2b")
 
     # ERROR: dlls/wineps.drv/psdrv.h:389:5: error: unknown type name ‘PSDRV_DEVMODEA’
@@ -425,7 +425,7 @@ def main():
     # GIT-start: https://source.winehq.org/git/wine.git/commit/d963a8f864a495f7230dc6fe717d71e61ae51d67
     # GIT-end: https://source.winehq.org/git/wine.git/commit/72cfc219f0ba2fc3aea19760558f7820f4883176
     # GIT: https://source.winehq.org/git/wine.git/commit/bdaddc4b7c4b4391b593a5f4ab91b8121c698bef
-    if wine_version >= Version("1.4") and wine_version < Version("1.5.10"):
+    if wine_version >= Version("1.3.30") and wine_version < Version("1.5.10"):
         # Way too many patches for fixing this, even across modules. Disable module.
         configure_options += " --disable-wineps.drv"
 
@@ -433,7 +433,7 @@ def main():
     # URL: https://bugs.winehq.org/show_bug.cgi?id=40851
     # GIT: https://source.winehq.org/git/wine.git/commit/10065d2acd0a9e1e852a8151c95569b99d1b3294
     # FIXED: wine-1.9.14
-    if wine_version >= Version("1.4") and wine_version < Version("1.9.14"):
+    if wine_version >= Version("1.3.30") and wine_version < Version("1.9.14"):
         patch_apply(wine_variant_source_path, "10065d2acd0a9e1e852a8151c95569b99d1b3294", "configure.ac")
 
     # ERROR: dlls/secur32/schannel_gnutls.c:45:12: error: conflicting types for ‘gnutls_cipher_get_block_size’
