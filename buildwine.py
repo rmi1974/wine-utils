@@ -67,6 +67,35 @@ def git_cherry_pick(source_path, commit_id):
     # FIXME: will generate new sha1
     run_command("git cherry-pick --keep-redundant-commits --strategy=recursive -X theirs -x {0}".format(commit_id), source_path)
 
+def patch_apply(source_path, commit_id):
+    """ Apply a patch from Git commit into current branch using 'patch' tool.
+        The heuristics/fuzziness produces much better results with old Wine versions
+        than any git merge strategy.
+
+    Parameters:
+        source_path (str): Path to source repository.
+        commit_id (str): Commit sha1 to generate patch from
+
+    Returns:
+        none.
+
+    """
+
+    # extract the patch from Git checkout
+    pipe = subprocess.Popen("git format-patch -1 {0} 2> /dev/null".format(commit_id),
+                            cwd=source_path, shell=True, stdout=subprocess.PIPE,
+                            encoding="utf8").stdout
+    patchfile = pipe.readline().rstrip(os.linesep)
+    pipe.close()
+
+    if not os.path.exists(os.path.normpath(os.path.join(source_path, patchfile))):
+        sys.exit("Patch extraction of '{0}' failed, aborting!".format(commit_id))
+
+    # Try to apply the patch.
+    run_command("patch -p1 < {0}".format(patchfile), source_path)
+
+    # NOTE: keep .patch files in place for documentation
+
 def main():
 
     # Common workspace root path to Wine artifact directories: sources, build, install etc.
@@ -368,26 +397,26 @@ def main():
     # apply Wine build fixups for older Wine versions
 
     # ERROR: tools/wrc/parser.y:2840:15: error: ‘YYLEX’ undeclared (first use in this function)
-    #        and various other locations with problematic bison directives, see multi cherry-picks
+    #        and various other locations with problematic bison directives
     # URL: https://bugs.winehq.org/show_bug.cgi?id=34329
     # GIT: https://source.winehq.org/git/wine.git/commit/8fcac3b2bb8ce4cdbcffc126df779bf1be168882
     # FIXED: wine-1.7.0
     if wine_version >= Version("1.4") and wine_version < Version("1.7.0"):
-        git_cherry_pick(wine_variant_source_path, "3f98185fb8f88c181877e909ab1b6422fb9bca1e")
-        git_cherry_pick(wine_variant_source_path, "8fcac3b2bb8ce4cdbcffc126df779bf1be168882")
-        git_cherry_pick(wine_variant_source_path, "bda5a2ffb833b2824325bd9361b30dbaf5f78068")
-        git_cherry_pick(wine_variant_source_path, "f86c46f6403fe338a544ab134bdf563c5b0934ae")
-        git_cherry_pick(wine_variant_source_path, "ffbe1ca986bd299e1fc894440849914378adbf5c")
+        patch_apply(wine_variant_source_path, "3f98185fb8f88c181877e909ab1b6422fb9bca1e")
+        patch_apply(wine_variant_source_path, "8fcac3b2bb8ce4cdbcffc126df779bf1be168882")
+        patch_apply(wine_variant_source_path, "bda5a2ffb833b2824325bd9361b30dbaf5f78068")
+        patch_apply(wine_variant_source_path, "f86c46f6403fe338a544ab134bdf563c5b0934ae")
+        patch_apply(wine_variant_source_path, "ffbe1ca986bd299e1fc894440849914378adbf5c")
 
     if wine_version >= Version("1.5.10") and wine_version < Version("1.7.0"):
-        git_cherry_pick(wine_variant_source_path, "c14e322a92a24e704836c5c12207c694a30e805f")
+        patch_apply(wine_variant_source_path, "c14e322a92a24e704836c5c12207c694a30e805f")
 
     # ERROR: err:msidb:get_tablecolumns column 1 out of range (gcc 4.9+ problem, breaks msi installers)
     # URL: https://bugs.winehq.org/show_bug.cgi?id=36139
     # GIT: https://source.winehq.org/git/wine.git/commit/deb274226783ab886bdb44876944e156757efe2b
     # FIXED: wine-1.7.20
     if wine_version >= Version("1.4") and wine_version < Version("1.7.20"):
-        git_cherry_pick(wine_variant_source_path, "deb274226783ab886bdb44876944e156757efe2b")
+        patch_apply(wine_variant_source_path, "deb274226783ab886bdb44876944e156757efe2b")
 
     # ERROR: dlls/wineps.drv/psdrv.h:389:5: error: unknown type name ‘PSDRV_DEVMODEA’
     # ERROR: dlls/wineps.drv/init.c:43:14: error: unknown type name ‘PSDRV_DEVMODE’
@@ -396,7 +425,7 @@ def main():
     # GIT-end: https://source.winehq.org/git/wine.git/commit/72cfc219f0ba2fc3aea19760558f7820f4883176
     # GIT: https://source.winehq.org/git/wine.git/commit/bdaddc4b7c4b4391b593a5f4ab91b8121c698bef
     if wine_version >= Version("1.4") and wine_version < Version("1.5.10"):
-        # Way too many cherry-picks for fixing this, even across modules. Disable module.
+        # Way too many patches for fixing this, even across modules. Disable module.
         configure_options += " --disable-wineps.drv"
 
     # ERROR: dlls/winspool.drv/info.c:779:13: error: ‘cupsGetPPD’ undeclared here (not in a function); did you mean ‘cupsGetFd’?
@@ -404,20 +433,20 @@ def main():
     # GIT: https://source.winehq.org/git/wine.git/commit/10065d2acd0a9e1e852a8151c95569b99d1b3294
     # FIXED: wine-1.9.14
     if wine_version >= Version("1.4") and wine_version < Version("1.9.14"):
-        git_cherry_pick(wine_variant_source_path, "10065d2acd0a9e1e852a8151c95569b99d1b3294")
+        patch_apply(wine_variant_source_path, "10065d2acd0a9e1e852a8151c95569b99d1b3294")
 
     # ERROR: dlls/secur32/schannel_gnutls.c:45:12: error: conflicting types for ‘gnutls_cipher_get_block_size’
     # URL: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=832275
     # GIT: https://source.winehq.org/git/wine.git/commit/bf5ac531a030bce9e798ab66bc53e84a65ca8fdb
     # FIXED: wine-1.9.13
     if wine_version >= Version("1.7.49") and wine_version < Version("1.9.13"):
-        git_cherry_pick(wine_variant_source_path, "bf5ac531a030bce9e798ab66bc53e84a65ca8fdb")
+        patch_apply(wine_variant_source_path, "bf5ac531a030bce9e798ab66bc53e84a65ca8fdb")
 
     # ERROR: include/winsock.h:401: warning: "INVALID_SOCKET" redefined
     # GIT: https://source.winehq.org/git/wine.git/commit/28173f06932edd85a64a952120d29b9bb1e762ea
     # FIXED: wine-2.13
     if wine_version >= Version("1.7.6") and wine_version < Version("2.13"):
-        git_cherry_pick(wine_variant_source_path, "28173f06932edd85a64a952120d29b9bb1e762ea")
+        patch_apply(wine_variant_source_path, "28173f06932edd85a64a952120d29b9bb1e762ea")
 
     ##################################################################
     # clean build directories if requested
