@@ -468,6 +468,23 @@ def main():
         patch_apply(wine_variant_source_path, "07a9909ccaea1e9626731c4b259f555877d50bb2")
         patch_apply(wine_variant_source_path, "72999eac5b315102d3d7d48aaf6d687ca8ec8d96")
 
+    # ERROR: dlls/msxml3/mxwriter.c: In function ‘mxwriter_get_output’:
+    #        dlls/msxml3/mxwriter.c:411:74: error: dereferencing pointer to incomplete type ‘xmlBuf’ {aka ‘struct _xmlBuf’}
+    #                          V_BSTR(dest) = SysAllocStringLen((const WCHAR*)This->buffer->conv->content,
+    #        make[1]: *** [Makefile:213: mxwriter.o] Error 1
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/a4b24978e9dc2e54057552fc2efffbd58cc25d0a
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/197d41156a1a237eb2073524ec36006d6a26ceaa
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/b0f704daaf633d8c713c9212a2ab5dd8a4457e7a
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/d80ee5b3ae36275f813b096576b5beecea2c2d60
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/fda8c2177d01c767c020864370cf9dfaf7b6755d
+    # FIXED: wine-1.3.35
+    if wine_version >= Version("1.3.30") and wine_version < Version("1.3.35"):
+        patch_apply(wine_variant_source_path, "a4b24978e9dc2e54057552fc2efffbd58cc25d0a")
+        patch_apply(wine_variant_source_path, "197d41156a1a237eb2073524ec36006d6a26ceaa")
+        patch_apply(wine_variant_source_path, "b0f704daaf633d8c713c9212a2ab5dd8a4457e7a")
+        patch_apply(wine_variant_source_path, "d80ee5b3ae36275f813b096576b5beecea2c2d60")
+        patch_apply(wine_variant_source_path, "fda8c2177d01c767c020864370cf9dfaf7b6755d")
+
     ##################################################################
     # clean build directories if requested
     if args.clean:
