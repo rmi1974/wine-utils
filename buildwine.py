@@ -449,6 +449,25 @@ def main():
     if wine_version >= Version("1.7.6") and wine_version < Version("2.13"):
         patch_apply(wine_variant_source_path, "28173f06932edd85a64a952120d29b9bb1e762ea")
 
+    # ERROR: /usr/bin/ld: ios.o: relocation R_X86_64_32 against symbol `basic_streambuf_char_overflow'
+    #                            can not be used when making a shared object; recompile with -fPIC
+    #        /usr/bin/ld: final link failed: Nonrepresentable section on output
+    #        make[1]: *** [Makefile:335: msvcp90.dll.so] Error 2
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/43bbce728ab60fe24c2ecc19cd55aec036090dc3
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/1c04cbfd336cc8867162468c8027f31492938a0f
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/400c887e857e86f3155c293a2d0293479b527c3d
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/07a9909ccaea1e9626731c4b259f555877d50bb2
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/72999eac5b315102d3d7d48aaf6d687ca8ec8d96
+    # FIXED: wine-1.3.35
+    if wine_version >= Version("1.3.30") and wine_version < Version("1.3.33"):
+        patch_apply(wine_variant_source_path, "43bbce728ab60fe24c2ecc19cd55aec036090dc3")
+    if wine_version >= Version("1.3.30") and wine_version < Version("1.3.34"):
+        patch_apply(wine_variant_source_path, "1c04cbfd336cc8867162468c8027f31492938a0f")
+        patch_apply(wine_variant_source_path, "400c887e857e86f3155c293a2d0293479b527c3d")
+    if wine_version >= Version("1.3.30") and wine_version < Version("1.3.35"):
+        patch_apply(wine_variant_source_path, "07a9909ccaea1e9626731c4b259f555877d50bb2")
+        patch_apply(wine_variant_source_path, "72999eac5b315102d3d7d48aaf6d687ca8ec8d96")
+
     ##################################################################
     # clean build directories if requested
     if args.clean:
