@@ -420,6 +420,8 @@ def main():
     # URL: https://bugs.winehq.org/show_bug.cgi?id=36139
     # GIT: https://source.winehq.org/git/wine.git/commit/deb274226783ab886bdb44876944e156757efe2b
     # FIXED: wine-1.7.20
+    # NOTE: wine-1.3.22 reformatted code: 'maxcount*sizeof(*colinfo)' -> 'maxcount * sizeof(*colinfo)'
+    # https://source.winehq.org/git/wine.git/commitdiff/1ae309f98194f56b3734943cd63d8a798319fb34
     if wine_version >= Version("1.3.28") and wine_version < Version("1.7.20"):
         patch_apply(wine_variant_source_path, "deb274226783ab886bdb44876944e156757efe2b")
 
