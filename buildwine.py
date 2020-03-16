@@ -452,7 +452,8 @@ def main():
     # ERROR: include/winsock.h:401: warning: "INVALID_SOCKET" redefined
     # GIT: https://source.winehq.org/git/wine.git/commit/28173f06932edd85a64a952120d29b9bb1e762ea
     # FIXED: wine-2.13
-    if wine_version >= Version("1.7.6") and wine_version < Version("2.13"):
+    # wpcap code introduced by: https://source.winehq.org/git/wine.git/commitdiff/fa67586811765d88d3b4108b3e5b4e51bb07868f
+    if wine_version >= Version("1.7.24") and wine_version < Version("2.13"):
         patch_apply(wine_variant_source_path, "28173f06932edd85a64a952120d29b9bb1e762ea")
 
     # ERROR: /usr/bin/ld: ios.o: relocation R_X86_64_32 against symbol `basic_streambuf_char_overflow'
