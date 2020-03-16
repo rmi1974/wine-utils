@@ -446,7 +446,7 @@ def main():
     # URL: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=832275
     # GIT: https://source.winehq.org/git/wine.git/commit/bf5ac531a030bce9e798ab66bc53e84a65ca8fdb
     # FIXED: wine-1.9.13
-    if wine_version >= Version("1.7.49") and wine_version < Version("1.9.13"):
+    if wine_version >= Version("1.7.47") and wine_version < Version("1.9.13"):
         patch_apply(wine_variant_source_path, "bf5ac531a030bce9e798ab66bc53e84a65ca8fdb")
 
     # ERROR: include/winsock.h:401: warning: "INVALID_SOCKET" redefined
