@@ -499,6 +499,14 @@ def main():
         patch_apply(wine_variant_source_path, "d80ee5b3ae36275f813b096576b5beecea2c2d60")
         patch_apply(wine_variant_source_path, "fda8c2177d01c767c020864370cf9dfaf7b6755d")
 
+    # wine-1.5.30-x86_64/bin/wine:
+    #       error while loading shared libraries: libwine.so.1: cannot open shared object file: No such file or directory
+    # URL: https://bugs.winehq.org/show_bug.cgi?id=33560
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/ce4b6451aabbe83809c7483c748cfa009cc090d6
+    # FIXED: wine-1.5.31
+    if wine_version >= Version("1.5.30") and wine_version < Version("1.5.31"):
+        patch_apply(wine_variant_source_path, "ce4b6451aabbe83809c7483c748cfa009cc090d6")
+
     ##################################################################
     # clean build directories if requested
     if args.clean:
