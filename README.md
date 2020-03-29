@@ -98,8 +98,8 @@ To better diagnose/debug build failures, pass `--jobs=1` to the script.
 
 Wine currently doesn't build with Yocto/Poky SDK cross-toolchains due to following bugs:
 
-* [Wine Bugzilla #46053]
-* [Wine Bugzilla #46079]
+* [Wine Bugzilla #46053][1]
+* [Wine Bugzilla #46079][2]
 
 Apply the patches.
 
@@ -140,9 +140,9 @@ Build Wine for target arch.
 
 Links
 
-* [Wine Bugzilla #46053](https://bugs.winehq.org/show_bug.cgi?id=46053)
-* [Wine Bugzilla #46079](https://bugs.winehq.org/show_bug.cgi?id=46079)
+* [Wine Bugzilla #46053][1]
+* [Wine Bugzilla #46079][2]
 
 [//]: # (invisible, for link references)
-[Wine Bugzilla #46053]: https://bugs.winehq.org/show_bug.cgi?id=46053
-[Wine Bugzilla #46079]: https://bugs.winehq.org/show_bug.cgi?id=46079
+[1]: https://bugs.winehq.org/show_bug.cgi?id=46053
+[2]: https://bugs.winehq.org/show_bug.cgi?id=46079
