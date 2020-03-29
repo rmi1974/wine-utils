@@ -138,7 +138,7 @@ Build Wine for target arch.
 
 ---
 
-Links
+**Links**
 
 * [Wine Bugzilla #46053][1]
 * [Wine Bugzilla #46079][2]
