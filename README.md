@@ -103,7 +103,7 @@ Wine currently doesn't build with Yocto/Poky SDK cross-toolchains due to followi
 
 Apply the patches.
 
-After that, `configure` needs to be updated due to bug xxx.
+After that, `configure` needs to be updated due to [Wine Bugzilla #46079].
 Since cross-compiling is done, a host-build for running wine tools must exist.
 
 ```shell
