@@ -507,6 +507,14 @@ def main():
     if wine_version >= Version("1.5.30") and wine_version < Version("1.5.31"):
         patch_apply(wine_variant_source_path, "ce4b6451aabbe83809c7483c748cfa009cc090d6")
 
+    # ERROR: rm -f fonts && ln -s ../mainline-build-1.9.5-x86_64/fonts fonts
+    #        rm: cannot remove 'fonts': Is a directory
+    # URL: https://bugs.winehq.org/show_bug.cgi?id=40253
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/c6d6dcee47eb97fd75e389434d4136de2f31414c
+    # FIXED: wine-1.9.6
+    if wine_version >= Version("1.9.5") and wine_version < Version("1.9.6"):
+        patch_apply(wine_variant_source_path, "c6d6dcee47eb97fd75e389434d4136de2f31414c")
+
     ##################################################################
     # clean build directories if requested
     if args.clean:
