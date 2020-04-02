@@ -89,7 +89,7 @@ def patch_apply(source_path, commit_id, exclude_pattern=""):
     patchfile = pipe.readline().rstrip(os.linesep)
     pipe.close()
 
-    if not os.path.exists(os.path.normpath(os.path.join(source_path, patchfile))):
+    if not patchfile or not os.path.exists(os.path.normpath(os.path.join(source_path, patchfile))):
         sys.exit("Patch extraction of '{0}' failed, aborting!".format(commit_id))
 
     run_command("filterdiff -p1 -x '{0}' < {1} | patch -p1 --forward --no-backup-if-mismatch \
