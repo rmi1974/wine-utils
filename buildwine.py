@@ -412,7 +412,7 @@ def main():
     if wine_version >= Version("1.3.28") and wine_version < Version("1.7.0"):
         patch_apply(wine_variant_source_path, "f86c46f6403fe338a544ab134bdf563c5b0934ae")
     # wbemprox: https://source.winehq.org/git/wine.git/commitdiff/f6be21103b441180c8557aa6bc2845e5428271a4
-    if wine_version >= Version("1.5.10") and wine_version < Version("1.7.0"):
+    if wine_version >= Version("1.5.8") and wine_version < Version("1.7.0"):
         patch_apply(wine_variant_source_path, "c14e322a92a24e704836c5c12207c694a30e805f")
 
     # ERROR: err:msidb:get_tablecolumns column 1 out of range (gcc 4.9+ problem, breaks msi installers)
