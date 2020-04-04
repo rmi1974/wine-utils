@@ -520,7 +520,7 @@ def main():
     # ERROR: gstreamer-1.0 base plugins 32-bit development files not found, gstreamer support disabled
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/20d41d9e2810696ca38598abcef6da8e77f9aae7
     # FIXED: wine-2.10
-    if wine_version >= Version("2.0") and wine_version < Version("2.10"):
+    if wine_version >= Version("1.7.12") and wine_version < Version("2.10"):
         patch_apply(wine_variant_source_path, "20d41d9e2810696ca38598abcef6da8e77f9aae7")
 
     # ERROR: configure: libOSMesa 64-bit development files not found (or too old)
