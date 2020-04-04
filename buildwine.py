@@ -42,31 +42,6 @@ def run_command(command, cwd=None, env=None):
     subprocess.run("set -o pipefail && {0}".format(command), cwd=cwd, env=env, check=True, shell=True,
                     stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
 
-def git_cherry_pick(source_path, commit_id):
-    """ cherry-pick a Git commit into current branch
-
-    Parameters:
-        source_path (str): Path to source repository.
-        commit_id (str): Commit sha1 of cherry-pick.
-
-    Returns:
-        none.
-
-    """
-
-    # FIXME: only works if the commit has no been cherry-picked
-    pipe = subprocess.Popen("git branch --contains {0} 2> /dev/null".format(commit_id),
-                            cwd=source_path, shell=True, stdout=subprocess.PIPE,
-                            encoding="utf8").stdout
-    branches = pipe.readline().rstrip(os.linesep)
-    pipe.close()
-
-    if branches:
-        return
-
-    # FIXME: will generate new sha1
-    run_command("git cherry-pick --keep-redundant-commits --strategy=recursive -X theirs -x {0}".format(commit_id), source_path)
-
 def patch_apply(source_path, commit_id, exclude_pattern=""):
     """ Apply a patch from Git commit into current branch using 'patch' tool.
         The heuristics/fuzziness produces much better results with old Wine versions
