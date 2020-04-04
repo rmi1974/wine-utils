@@ -442,7 +442,7 @@ def main():
     if wine_version >= Version("1.3.28") and wine_version < Version("1.7.12"):
         patch_apply(wine_variant_source_path, "2ac0c877f591be14815902b527f314a915eee147")
     if wine_version >= Version("1.7.12") and wine_version < Version("1.9.14"):
-        patch_apply(wine_variant_source_path, "61abd04756c0daa3c9616fa6c27c5d4c6f496c24")
+        patch_apply(wine_variant_source_path, "10065d2acd0a9e1e852a8151c95569b99d1b3294")
 
     # ERROR: dlls/secur32/schannel_gnutls.c:45:12: error: conflicting types for ‘gnutls_cipher_get_block_size’
     # URL: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=832275
