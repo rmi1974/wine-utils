@@ -94,6 +94,10 @@ Build a custom variant, useful when doing Git bisect:
 
 To better diagnose/debug build failures, pass `--jobs=1` to the script.
 
+### Missing development packages
+
+See [How to show missing development packages when building Wine from source][1].
+
 ### Cross-compiling
 
 Wine currently doesn't build with Yocto/Poky SDK cross-toolchains due to following bugs:
@@ -140,9 +144,11 @@ Build Wine for target arch.
 
 **Links**
 
-* [Wine Bugzilla #46053][1]
-* [Wine Bugzilla #46079][2]
+* [How to show missing development packages when building Wine from source][1]
+* [Wine Bugzilla #46053][2]
+* [Wine Bugzilla #46079][3]
 
 [//]: # (invisible, for link references)
-[1]: https://bugs.winehq.org/show_bug.cgi?id=46053
-[2]: https://bugs.winehq.org/show_bug.cgi?id=46079
+[1]: https://gist.github.com/rmi1974/f4393f5df3e34dc8cae35e2974fd9cda
+[2]: https://bugs.winehq.org/show_bug.cgi?id=46053
+[3]: https://bugs.winehq.org/show_bug.cgi?id=46079
