@@ -25,22 +25,24 @@ def parse_version(version):
     return parse_version(version)
 
 def run_command(command, cwd=None, env=None):
-    """Run the specified command in a subprocess shell.
+    """Run the specified command in a subprocess shell and returns stdout
 
     Parameters:
         command (str): Linux shell command.
+        want_stdout(bool): Set if stdout is required.
         cwd (str): Working directory for the command.
         env (str): Custom shell environment for the intermediate shell.
     Returns:
+        stdout
         if executed process exit code is non-zero, raises a CalledProcessError.
 
     """
-    print("[*] Running following command")
+    print("[*] Running following command:")
     print("'{0}' (cwd='{1}')".format( command, cwd))
 
     # Some commands involve 'tee' (pipelines) hence prefix with 'pipefail' to capture failure as well
-    subprocess.run("set -o pipefail && {0}".format(command), cwd=cwd, env=env, check=True, shell=True,
-                    stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+    return subprocess.run("set -o pipefail && {0}".format(command), stdout=subprocess.PIPE,
+                        cwd=cwd, env=env, shell=True, encoding="utf8").stdout.rstrip(os.linesep)
 
 def patch_apply(source_path, commit_id, exclude_pattern=""):
     """ Apply a patch from Git commit into current branch using 'patch' tool.
