@@ -25,15 +25,32 @@ def parse_version(version):
     return parse_version(version)
 
 def run_command(command, cwd=None, env=None):
-    """Run the specified command in a subprocess shell and returns stdout
+    """Run the specified command in a subprocess shell and show stdout
 
     Parameters:
         command (str): Linux shell command.
-        want_stdout(bool): Set if stdout is required.
         cwd (str): Working directory for the command.
         env (str): Custom shell environment for the intermediate shell.
     Returns:
-        stdout
+        if executed process exit code is non-zero, raises a CalledProcessError.
+
+    """
+    print("[*] Running following command:")
+    print("'{0}' (cwd='{1}')".format( command, cwd))
+
+    # Some commands involve 'tee' (pipelines) hence prefix with 'pipefail' to capture failure as well
+    subprocess.run("set -o pipefail && {0}".format(command), cwd=cwd, env=env, check=True, shell=True,
+                    stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+
+def run_command_stdout(command, cwd=None, env=None):
+    """Run the specified command in a subprocess shell and return stdout
+
+    Parameters:
+        command (str): Linux shell command.
+        cwd (str): Working directory for the command.
+        env (str): Custom shell environment for the intermediate shell.
+    Returns:
+        stdout as string
         if executed process exit code is non-zero, raises a CalledProcessError.
 
     """
@@ -60,18 +77,12 @@ def patch_apply(source_path, commit_id, exclude_pattern=""):
     """
 
     # extract the patch from Git checkout
-    pipe = subprocess.Popen("git format-patch -1 {0} 2> /dev/null".format(commit_id),
-                            cwd=source_path, shell=True, stdout=subprocess.PIPE,
-                            encoding="utf8").stdout
-    patchfile = pipe.readline().rstrip(os.linesep)
-    pipe.close()
-
+    patchfile = run_command_stdout("git format-patch -1 {0} 2> /dev/null".format(commit_id), source_path)
     if not patchfile or not os.path.exists(os.path.normpath(os.path.join(source_path, patchfile))):
         sys.exit("Patch extraction of '{0}' failed, aborting!".format(commit_id))
 
     run_command("filterdiff -p1 -x '{0}' < {1} | patch -p1 --forward --no-backup-if-mismatch \
                 || [[ $? -eq 1 ]] && true".format(exclude_pattern, patchfile), source_path)
-    # NOTE: keep .patch files in place for documentation
 
 def main():
 
@@ -160,10 +171,9 @@ def main():
     # version/release handling part #2
     if not args.version:
         # no version given but we need one to apply fixups on custom builds
-        pipe = subprocess.Popen("git describe --abbrev=0 2> /dev/null | sed 's/wine-//'",
-                                cwd=wine_variant_source_path, shell=True, stdout=subprocess.PIPE, encoding="utf8").stdout
-        wine_version = parse_version(pipe.readline().rstrip(os.linesep))
-        pipe.close()
+        stdout = run_command_stdout("git describe --abbrev=0 2> /dev/null | sed 's/wine-//'",
+                            wine_variant_source_path)
+        wine_version = parse_version(stdout)
 
     if not isinstance(wine_version, Version):
         # unknown version schemes not supported
@@ -188,14 +198,8 @@ def main():
 
     ##################################################################
     # default host and target machine architectures
-    pipe = subprocess.Popen("setarch linux64 uname -m", shell=True,
-                            stdout=subprocess.PIPE, encoding="utf8").stdout
-    wine_host_arch64 = pipe.readline().rstrip(os.linesep)
-    pipe.close()
-    pipe = subprocess.Popen("setarch linux32 uname -m", shell=True,
-                            stdout=subprocess.PIPE, encoding="utf8").stdout
-    wine_host_arch32 = pipe.readline().rstrip(os.linesep)
-    pipe.close()
+    wine_host_arch64 = run_command_stdout("setarch linux64 uname -m")
+    wine_host_arch32 = run_command_stdout("setarch linux32 uname -m")
     # Default: no cross-compile -> target == host arch
     wine_target_arch64 = wine_host_arch64
     wine_target_arch32 = wine_host_arch32
@@ -212,26 +216,16 @@ def main():
         wine_cross_compile_options += " --with-wine-tools={0}/{1}-build{2}-{3}".format(
             wine_workspace_path, args.variant, dash_version, wine_host_arch64)
 
-        pipe = subprocess.Popen("{0}gcc -dumpmachine | cut -d '-' -f1 2>&1".format(
-                                args.cross_compile_prefix),
-                                shell=True, stdout=subprocess.PIPE, encoding="utf8").stdout
-        wine_target_arch = pipe.readline().rstrip(os.linesep)
-        pipe.close()
+        wine_target_arch = run_command_stdout("{0}gcc -dumpmachine | cut -d '-' -f1 2>&1".format(
+                                args.cross_compile_prefix))
 
         if "arm" in wine_target_arch:
             wine_target_arch32 = wine_target_arch
             wine_target_arch64 = ""
             # On 32-bit ARM, the floating point ABI defaults to 'softfp' for compatibility
             # with Windows binaries. This won't work for hardfp toolchains.
-            pipe = subprocess.Popen(r"$CC -Q --help=target | grep -m1 -oP '\bmfloat-abi=\s+\K\w+'",
-                                    shell=True, stdout=subprocess.PIPE, encoding="utf8").stdout
-            cc_opt_floatabi = pipe.readline().rstrip(os.linesep)
-            pipe.close()
-
-            pipe = subprocess.Popen(r"$CC -Q --help=target | grep -m1 -oP '\bmfpu=\s+\K\w+'",
-                                    shell=True, stdout=subprocess.PIPE, encoding="utf8").stdout
-            cc_opt_fpu = pipe.readline().rstrip(os.linesep)
-            pipe.close()
+            cc_opt_floatabi = run_command_stdout(r"$CC -Q --help=target | grep -m1 -oP '\bmfloat-abi=\s+\K\w+'")
+            cc_opt_fpu = run_command_stdout(r"$CC -Q --help=target | grep -m1 -oP '\bmfpu=\s+\K\w+'")
 
             wine_cross_compile_options += " --with-float-abi={0} --with-fpu={1}".format(
                                             cc_opt_floatabi, cc_opt_fpu)
