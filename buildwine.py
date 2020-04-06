@@ -322,6 +322,9 @@ def main():
         if not os.path.exists(wine_local_clone_source):
             # create local git mirror for the first time
             run_command("git clone --mirror {0} {1}".format(WINE_MAINLINE_GIT_URI, wine_local_clone_source))
+        else:
+            # ensure local git mirror is up to date
+            run_command("git fetch --all || true", cwd=wine_local_clone_source)
 
         # use '--shared' to speed up checkout and save disk space
         run_command("git clone --shared {0} {1}".format(wine_local_clone_source, wine_mainline_source_path))
@@ -338,12 +341,12 @@ def main():
         if not os.path.exists(wine_staging_patches_path):
             run_command("git clone {0} {1}".format(WINE_STAGING_GIT_URI, wine_staging_patches_path))
         else:
-            run_command("git fetch --all", cwd=wine_staging_patches_path)
+            run_command("git fetch --all || true", cwd=wine_staging_patches_path)
 
         if not os.path.exists(wine_variant_source_path):
             run_command("git clone {0} {1}".format(wine_mainline_source_path, wine_variant_source_path))
         else:
-            run_command("git fetch --all", cwd=wine_variant_source_path)
+            run_command("git fetch --all || true", cwd=wine_variant_source_path)
 
         if not args.no_reset_source:
             if args.version:
