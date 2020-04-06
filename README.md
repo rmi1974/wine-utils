@@ -98,12 +98,31 @@ To better diagnose/debug build failures, pass `--jobs=1` to the script.
 
 See [How to show missing development packages when building Wine from source][1].
 
+### LLVM MinGw toolchain
+
+See project home page [LLVM/Clang/LLD based mingw-w64 toolchain][2] for overview.
+
+Main benefits:
+
+* Wine builtin modules cross-compiled to PE format (no ELF hybrids as with GCC)
+* symbol information generated in PDB format which can be used with many Windows debugging tools
+
+Tarballs are available from [LLVM/Clang/LLD mingw-w64 release downloads][3].
+
+```shell
+wget https://github.com/mstorsjo/llvm-mingw/releases/download/20200325/llvm-mingw-20200325-ubuntu-18.04.tar.xz
+
+tar xJvf llvm-mingw-20200325-ubuntu-18.04.tar.xz
+```
+
+Make sure it can be found in path by prepending to the `PATH` environment variable.
+
 ### Cross-compiling
 
 Wine currently doesn't build with Yocto/Poky SDK cross-toolchains due to following bugs:
 
-* [Wine Bugzilla #46053][1]
-* [Wine Bugzilla #46079][2]
+* [Wine Bugzilla #46053][4]
+* [Wine Bugzilla #46079][5]
 
 Apply the patches.
 
@@ -137,7 +156,7 @@ source sdk-install/environment-setup-armv7*
 Build Wine for target arch.
 
 ```shell
-./buildwine.py --cross-compile-prefix=$CROSS_COMPILE --disable-mingw --clean
+./buildwine.py --cross-compile-prefix=$CROSS_COMPILE --disable-mingw --clean --force-autoconf
 ```
 
 ---
@@ -145,10 +164,14 @@ Build Wine for target arch.
 **Links**
 
 * [How to show missing development packages when building Wine from source][1]
-* [Wine Bugzilla #46053][2]
-* [Wine Bugzilla #46079][3]
+* [LLVM/Clang/LLD based mingw-w64 toolchain][2]
+* [LLVM/Clang/LLD mingw-w64 release downloads][3]
+* [Wine Bugzilla #46053][4]
+* [Wine Bugzilla #46079][5]
 
 [//]: # (invisible, for link references)
 [1]: https://gist.github.com/rmi1974/f4393f5df3e34dc8cae35e2974fd9cda
-[2]: https://bugs.winehq.org/show_bug.cgi?id=46053
-[3]: https://bugs.winehq.org/show_bug.cgi?id=46079
+[2]: https://github.com/mstorsjo/llvm-mingw
+[3]: https://github.com/mstorsjo/llvm-mingw/releases/download
+[4]: https://bugs.winehq.org/show_bug.cgi?id=46053
+[5]: https://bugs.winehq.org/show_bug.cgi?id=46079
