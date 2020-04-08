@@ -128,7 +128,7 @@ def main():
                            help="do not use the MinGW cross-compiler for building Wine")
     my_parser.add_argument("--enable-mscoree",
                            action="store_true",
-                           help="enable Wine-Mono")
+                           help="enable Wine-Mono on HEAD builds (default for Wine release builds)")
     my_parser.add_argument("--enable-tests",
                            action="store_true",
                            help="enable building of Wine tests")
@@ -191,8 +191,8 @@ def main():
     # MinGW cross-compiler option '--with-mingw' was added with Wine 4.6
     if wine_version >= Version("4.6"):
         configure_options += " --without-mingw" if args.disable_mingw else " --with-mingw"
-    # - Wine-Mono disabled by default
-    configure_options += " --enable-mscoree" if args.enable_mscoree else " --disable-mscoree"
+    # - Wine-Mono disabled by default on HEAD builds (no explicit version given)
+    configure_options += " --enable-mscoree" if args.enable_mscoree or args.version else " --disable-mscoree"
     # - Tests not built by default
     configure_options += " --enable-tests" if args.enable_tests else " --disable-tests"
 

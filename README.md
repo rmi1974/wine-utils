@@ -9,7 +9,7 @@ By default, `buildwine` always builds shared WoW64 Wine (32-bit and 64-bit), exc
 Note the following defaults:
 
 * building of tests is disabled, enable it by passing `--enable-tests` to the script
-* integration of Wine-Mono is disabled, enable it by passing `--enable-mscoree` to the script
+* integration of Wine-Mono is disabled when building from HEAD (no explicit `--version`), enable it by passing `--enable-mscoree` to the script
 
 The script maintains a specific top-level directory structure to separate sources and build artifacts for various variants and host/target architectures.
 
