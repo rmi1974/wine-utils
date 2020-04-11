@@ -92,6 +92,17 @@ Build a custom variant, useful when doing Git bisect:
 ./buildwine.py --variant=custom
 ```
 
+Build a range of Wine releases:
+
+```shell
+# build Wine 1.7.[51..53]
+for i in 1.7.51 1.7.52 1.7.53 ; do ./buildwine.py --version=$i --clean ; done
+
+# build Wine 1.7.[40..49]
+for i in `git -C mainline-src tag | sed -n 's/^wine-\(1.7.4[0-9]\)/\1/p' | \
+    sort -V` ; do ./buildwine.py --version=$i --clean ; done
+```
+
 To better diagnose/debug build failures, pass `--jobs=1` to the script.
 
 ### Missing development packages
