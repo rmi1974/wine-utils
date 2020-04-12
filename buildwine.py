@@ -453,7 +453,10 @@ def main():
 
     # ERROR: configure: libOSMesa 64-bit development files not found (or too old)
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/f625707ffc38c58cc296c8a27ac6c2b3e1c38249
+    # REBASE-FIX needed due to: https://source.winehq.org/git/wine.git/commitdiff/cf0e96c6d0edc3a22b8ee5ac423d9b6b652ce0e5
     # FIXED: wine-2.7
+    if wine_version >= Version("1.7.7") and wine_version < Version("1.7.12"):
+        patch_apply(wine_variant_source_path, "324305bb282aa4d4de471c43d5c129d2bdd97711")
     if wine_version >= Version("1.7.12") and wine_version < Version("2.7"):
         patch_apply(wine_variant_source_path, "f625707ffc38c58cc296c8a27ac6c2b3e1c38249")
 
