@@ -429,49 +429,6 @@ def main():
     if wine_version >= Version("1.7.24") and wine_version < Version("2.13"):
         patch_apply(wine_variant_source_path, "28173f06932edd85a64a952120d29b9bb1e762ea")
 
-    # ERROR: /usr/bin/ld: ios.o: relocation R_X86_64_32 against symbol `basic_streambuf_char_overflow'
-    #                            can not be used when making a shared object; recompile with -fPIC
-    #        /usr/bin/ld: final link failed: Nonrepresentable section on output
-    #        make[1]: *** [Makefile:335: msvcp90.dll.so] Error 2
-    # GIT: https://source.winehq.org/git/wine.git/commitdiff/6e4ad3394152077d630bac6cedfa47c81cecef4a
-    # GIT: https://source.winehq.org/git/wine.git/commitdiff/43bbce728ab60fe24c2ecc19cd55aec036090dc3
-    # GIT: https://source.winehq.org/git/wine.git/commitdiff/1c04cbfd336cc8867162468c8027f31492938a0f
-    # GIT: https://source.winehq.org/git/wine.git/commitdiff/400c887e857e86f3155c293a2d0293479b527c3d
-    # GIT: https://source.winehq.org/git/wine.git/commitdiff/07a9909ccaea1e9626731c4b259f555877d50bb2
-    # GIT: https://source.winehq.org/git/wine.git/commitdiff/72999eac5b315102d3d7d48aaf6d687ca8ec8d96
-    # FIXED: wine-1.3.35
-    # Code introduced by: https://source.winehq.org/git/wine.git/commitdiff/3496823434a3051ca5fd3bf8909579e3a50eafc2
-    if wine_version >= Version("1.3.28") and wine_version < Version("1.3.29"):
-        patch_apply(wine_variant_source_path, "6e4ad3394152077d630bac6cedfa47c81cecef4a")
-    if wine_version >= Version("1.3.28") and wine_version < Version("1.3.33"):
-        patch_apply(wine_variant_source_path, "43bbce728ab60fe24c2ecc19cd55aec036090dc3")
-    if wine_version >= Version("1.3.28") and wine_version < Version("1.3.34"):
-        patch_apply(wine_variant_source_path, "1c04cbfd336cc8867162468c8027f31492938a0f")
-        patch_apply(wine_variant_source_path, "400c887e857e86f3155c293a2d0293479b527c3d")
-    if wine_version >= Version("1.3.28") and wine_version < Version("1.3.35"):
-        patch_apply(wine_variant_source_path, "07a9909ccaea1e9626731c4b259f555877d50bb2")
-        patch_apply(wine_variant_source_path, "72999eac5b315102d3d7d48aaf6d687ca8ec8d96")
-
-    # ERROR: dlls/msxml3/mxwriter.c: In function ‘mxwriter_get_output’:
-    #        dlls/msxml3/mxwriter.c:411:74: error: dereferencing pointer to incomplete type ‘xmlBuf’ {aka ‘struct _xmlBuf’}
-    #                          V_BSTR(dest) = SysAllocStringLen((const WCHAR*)This->buffer->conv->content,
-    #        make[1]: *** [Makefile:213: mxwriter.o] Error 1
-    # GIT: https://source.winehq.org/git/wine.git/commitdiff/a4b24978e9dc2e54057552fc2efffbd58cc25d0a
-    # GIT: https://source.winehq.org/git/wine.git/commitdiff/197d41156a1a237eb2073524ec36006d6a26ceaa
-    # GIT: https://source.winehq.org/git/wine.git/commitdiff/b0f704daaf633d8c713c9212a2ab5dd8a4457e7a
-    # GIT: https://source.winehq.org/git/wine.git/commitdiff/d80ee5b3ae36275f813b096576b5beecea2c2d60
-    # GIT: https://source.winehq.org/git/wine.git/commitdiff/fda8c2177d01c767c020864370cf9dfaf7b6755d
-    # FIXED: wine-1.3.35
-    # https://source.winehq.org/git/wine.git/commitdiff/54326116da3b0f439baef39db34607038d28a39d
-    if wine_version >= Version("1.3.28") and wine_version < Version("1.3.30"):
-        patch_apply(wine_variant_source_path, "54326116da3b0f439baef39db34607038d28a39d")
-    if wine_version >= Version("1.3.28") and wine_version < Version("1.3.35"):
-        patch_apply(wine_variant_source_path, "a4b24978e9dc2e54057552fc2efffbd58cc25d0a")
-        patch_apply(wine_variant_source_path, "197d41156a1a237eb2073524ec36006d6a26ceaa")
-        patch_apply(wine_variant_source_path, "b0f704daaf633d8c713c9212a2ab5dd8a4457e7a")
-        patch_apply(wine_variant_source_path, "d80ee5b3ae36275f813b096576b5beecea2c2d60")
-        patch_apply(wine_variant_source_path, "fda8c2177d01c767c020864370cf9dfaf7b6755d")
-
     # wine-1.5.30-x86_64/bin/wine:
     #       error while loading shared libraries: libwine.so.1: cannot open shared object file: No such file or directory
     # URL: https://bugs.winehq.org/show_bug.cgi?id=33560
