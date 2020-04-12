@@ -81,8 +81,8 @@ def patch_apply(source_path, commit_id, exclude_pattern=""):
     if not patchfile or not os.path.exists(os.path.normpath(os.path.join(source_path, patchfile))):
         sys.exit("Patch extraction of '{0}' failed, aborting!".format(commit_id))
 
-    run_command("filterdiff -p1 -x '{0}' < {1} | patch -p1 --forward --no-backup-if-mismatch \
-                || [[ $? -eq 1 ]] && true".format(exclude_pattern, patchfile), source_path)
+    run_command("filterdiff -p1 -x '{0}' < {1} | patch -p1 --forward --no-backup-if-mismatch".format(
+                exclude_pattern, patchfile), source_path)
 
 def main():
 
