@@ -451,20 +451,20 @@ def main():
     # ERROR: gstreamer-1.0 base plugins 32-bit development files not found, gstreamer support disabled
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/20d41d9e2810696ca38598abcef6da8e77f9aae7
     # FIXED: wine-2.10
-    if wine_version >= Version("1.6") and wine_version < Version("2.10"):
+    if wine_version >= Version("1.5.0") and wine_version < Version("2.10"):
         patch_apply(wine_variant_source_path, "20d41d9e2810696ca38598abcef6da8e77f9aae7")
 
     # configure: Don't use X_PRE_LIBS.
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/bb50d6fd9512a9a05306c56112bbcdc6de6c8d65
     # FIXED: wine-1.7.2
-    if wine_version >= Version("1.6") and wine_version < Version("1.7.2"):
+    if wine_version >= Version("1.5.0") and wine_version < Version("1.7.2"):
         patch_apply(wine_variant_source_path, "bb50d6fd9512a9a05306c56112bbcdc6de6c8d65")
 
     # ERROR: configure: libOSMesa 64-bit development files not found (or too old)
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/f625707ffc38c58cc296c8a27ac6c2b3e1c38249
     # REBASE-FIX needed due to: https://source.winehq.org/git/wine.git/commitdiff/cf0e96c6d0edc3a22b8ee5ac423d9b6b652ce0e5
     # FIXED: wine-2.7
-    if wine_version >= Version("1.6") and wine_version < Version("1.7.12"):
+    if wine_version >= Version("1.5.0") and wine_version < Version("1.7.12"):
         patch_apply(wine_variant_source_path, "324305bb282aa4d4de471c43d5c129d2bdd97711")
     if wine_version >= Version("1.7.12") and wine_version < Version("2.7"):
         patch_apply(wine_variant_source_path, "f625707ffc38c58cc296c8a27ac6c2b3e1c38249")
@@ -473,12 +473,12 @@ def main():
     # winegcc: Set the LDDLLFLAGS according to the target platform.
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/2374cd52a72d685d4f7ddb88456a846e6396415f
     # FIXED: wine-1.7.1
-    if wine_version >= Version("1.6") and wine_version < Version("1.7.1"):
+    if wine_version >= Version("1.5.0") and wine_version < Version("1.7.1"):
         patch_apply(wine_variant_source_path, "2374cd52a72d685d4f7ddb88456a846e6396415f")
     # configure: WARNING: prelink not found, base address of core dlls won't be set correctly.
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/a35f9a13a80fa93c251e12402a73a38a89ec397f
     # FIXED: wine-1.7.54
-    if wine_version >= Version("1.6") and wine_version < Version("1.7.54"):
+    if wine_version >= Version("1.5.0") and wine_version < Version("1.7.54"):
         patch_apply(wine_variant_source_path, "a35f9a13a80fa93c251e12402a73a38a89ec397f")
 
     ##################################################################
