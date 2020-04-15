@@ -473,7 +473,7 @@ def main():
     # winegcc: Set the LDDLLFLAGS according to the target platform.
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/2374cd52a72d685d4f7ddb88456a846e6396415f
     # FIXED: wine-1.7.1
-    if wine_version >= Version("1.5.0") and wine_version < Version("1.7.1"):
+    if wine_version >= Version("1.5.30") and wine_version < Version("1.7.1"):
         patch_apply(wine_variant_source_path, "2374cd52a72d685d4f7ddb88456a846e6396415f")
     # configure: WARNING: prelink not found, base address of core dlls won't be set correctly.
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/a35f9a13a80fa93c251e12402a73a38a89ec397f
