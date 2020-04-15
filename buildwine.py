@@ -478,7 +478,7 @@ def main():
     # configure: WARNING: prelink not found, base address of core dlls won't be set correctly.
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/a35f9a13a80fa93c251e12402a73a38a89ec397f
     # FIXED: wine-1.7.54
-    if wine_version >= Version("1.5.0") and wine_version < Version("1.7.54"):
+    if wine_version >= Version("1.5.30") and wine_version < Version("1.7.54"):
         patch_apply(wine_variant_source_path, "a35f9a13a80fa93c251e12402a73a38a89ec397f")
 
     ##################################################################
