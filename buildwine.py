@@ -457,7 +457,7 @@ def main():
     # configure: Don't use X_PRE_LIBS.
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/bb50d6fd9512a9a05306c56112bbcdc6de6c8d65
     # FIXED: wine-1.7.2
-    if wine_version >= Version("1.5.0") and wine_version < Version("1.7.2"):
+    if wine_version >= Version("1.5.17") and wine_version < Version("1.7.2"):
         patch_apply(wine_variant_source_path, "bb50d6fd9512a9a05306c56112bbcdc6de6c8d65")
 
     # ERROR: configure: libOSMesa 64-bit development files not found (or too old)
