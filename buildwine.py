@@ -198,6 +198,9 @@ def main():
     configure_options += " --enable-mscoree" if args.enable_mscoree or args.version else " --disable-mscoree"
     # - Tests not built by default
     configure_options += " --enable-tests" if args.enable_tests else " --disable-tests"
+    # NOTE: 'configure --enable-modulename ' will cause: 'configure:num: WARNING: unrecognized options: --enable-modulename'
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/d92bcec95a55bae2f9bc686bad9b2641a162c548
+    # FIXED: wine-1.7.4
 
     ##################################################################
     # default host and target machine architectures
