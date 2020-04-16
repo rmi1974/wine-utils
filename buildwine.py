@@ -404,7 +404,7 @@ def main():
     # GIT-start: https://source.winehq.org/git/wine.git/commit/d963a8f864a495f7230dc6fe717d71e61ae51d67
     # GIT-end: https://source.winehq.org/git/wine.git/commit/72cfc219f0ba2fc3aea19760558f7820f4883176
     # GIT: https://source.winehq.org/git/wine.git/commit/bdaddc4b7c4b4391b593a5f4ab91b8121c698bef
-    if wine_version >= Version("1.4") and wine_version < Version("1.5.7"):
+    if wine_version >= Version("1.4") and wine_version < Version("1.5.2"):
         # Way too many patches for fixing this, even across modules. Disable module.
         configure_options += " --disable-wineps.drv"
     if wine_version >= Version("1.5.2") and wine_version < Version("1.5.7"):
