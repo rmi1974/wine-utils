@@ -279,8 +279,13 @@ def main():
     # Currently not supported by Wine loader: https://bugs.winehq.org/show_bug.cgi?id=48417
     my_env["CROSSLDFLAGS"] = " -Wl,--dynamicbase"
     # - generate debug symbols in PDB format
-    my_env["CROSSCFLAGS"] = "-g -gcodeview -O2"
-    my_env["CROSSLDFLAGS"] = "-Wl,-pdb="
+    # GIT: https://source.winehq.org/git/wine.git/commit/83d00d328f58f910a9b197e0a465b110cbdc727c
+    if wine_version >= Version("5.9"):
+        # Support split debug for cross compiled modules
+        my_env["CROSSDEBUG"] = "pdb"
+    else:
+        my_env["CROSSCFLAGS"] = "-g -gcodeview -O2"
+        my_env["CROSSLDFLAGS"] = "-Wl,-pdb="
 
     # target arch specific build and install paths
     wine_build_target_arch32_path = ""
