@@ -109,7 +109,7 @@ To better diagnose/debug build failures, pass `--jobs=1` to the script.
 
 See [How to show missing development packages when building Wine from source][1].
 
-### LLVM MinGw toolchain
+### Cross-compiling using LLVM MinGw toolchain
 
 See project home page [LLVM/Clang/LLD based mingw-w64 toolchain][2] for overview.
 
@@ -128,17 +128,18 @@ tar xJvf llvm-mingw-20200325-ubuntu-18.04.tar.xz
 
 Make sure it can be found in path by prepending to the `PATH` environment variable.
 
-### Cross-compiling
+### Cross-compiling using Poky SDK cross-toolchain
+
+For more information on how to create Poky SDK cross-toolchains see [meta-winedev: Yocto layer for Wine cross-development][4].
 
 Wine currently doesn't build with Yocto/Poky SDK cross-toolchains due to following bugs:
 
-* [Wine Bugzilla #46053][4]
-* [Wine Bugzilla #46079][5]
+* [Wine Bugzilla #46053][5]
+* [Wine Bugzilla #46079][6]
 
 Apply the patches.
 
-After that, `configure` needs to be updated due to [Wine Bugzilla #46079].
-Since cross-compiling is done, a host-build for running wine tools must exist.
+After that, `configure` needs to be updated. Since cross-compiling is done, a host-build for running wine tools must exist.
 
 ```shell
 ./buildwine.py --clean --force-autoconf
@@ -177,12 +178,14 @@ Build Wine for target arch.
 * [How to show missing development packages when building Wine from source][1]
 * [LLVM/Clang/LLD based mingw-w64 toolchain][2]
 * [LLVM/Clang/LLD mingw-w64 release downloads][3]
-* [Wine Bugzilla #46053][4]
-* [Wine Bugzilla #46079][5]
+* [meta-winedev: Yocto layer for Wine cross-development][4]
+* [Wine Bugzilla #46053][5]
+* [Wine Bugzilla #46079][6]
 
 [//]: # (invisible, for link references)
 [1]: https://gist.github.com/rmi1974/f4393f5df3e34dc8cae35e2974fd9cda
 [2]: https://github.com/mstorsjo/llvm-mingw
 [3]: https://github.com/mstorsjo/llvm-mingw/releases/download
-[4]: https://bugs.winehq.org/show_bug.cgi?id=46053
-[5]: https://bugs.winehq.org/show_bug.cgi?id=46079
+[4]: https://github.com/rmi1974/meta-winedev
+[5]: https://bugs.winehq.org/show_bug.cgi?id=46053
+[6]: https://bugs.winehq.org/show_bug.cgi?id=46079
