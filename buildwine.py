@@ -473,6 +473,14 @@ def main():
     if wine_version >= Version("1.5.30") and wine_version < Version("1.7.54"):
         patch_apply(wine_variant_source_path, "a35f9a13a80fa93c251e12402a73a38a89ec397f")
 
+    # ERROR: /usr/bin/ld: chain.o:../dlls/crypt32/crypt32_private.h:155: multiple definition of `hInstance';
+    #        cert.o:../dlls/crypt32/crypt32_private.h:155: first defined here
+    # Fixup for GCC 10.x: https://gcc.gnu.org/gcc-10/porting_to.html#c
+    # Pass '-fcommon' to CFLAGS to avoid applying a dozen commits to various components starting with
+    # GIT: https://source.winehq.org/git/wine.git/commit/5740b735cdb44fb89a41f3090dcc3dabf360ab41
+    if wine_version < Version("5.1"):
+        wine_cflags_common += " -fcommon"
+
     ##################################################################
     # clean build directories if requested
     if args.clean:
