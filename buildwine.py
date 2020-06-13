@@ -126,6 +126,9 @@ def main():
                            type=str,
                            default="",
                            help="specify the cross-toolchain prefix")
+    my_parser.add_argument("--enable-clang",
+                           action="store_true",
+                           help="Use the clang for building Wine")
     my_parser.add_argument("--disable-mingw",
                            action="store_true",
                            help="do not use the MinGW cross-compiler for building Wine")
@@ -252,20 +255,24 @@ def main():
     wine_cflags_target_arch64 = ""
     wine_cflags_target_arch32 = ""
 
+    # Use clang if requested
+    if args.enable_clang:
+        # Wine bug #38886: https://bugs.winehq.org/show_bug.cgi?id=38886
+        # needs ARM64 specific '__builtin_ms_va_list'
+        # https://source.winehq.org/git/wine.git/commit/8fb8cc03c3edb599dd98f369e14a08f899cbff95
+        # gcc lacking '__builtin_ms_va_list' support on ARM64:  https://gcc.gnu.org/bugzilla/show_bug.cgi?id=87334
+
+        # CLANGxxx environment variables might be set by cross-compile environments such as Yocto SDK
+        my_env["CXX"] = os.getenv('CLANGCXX', 'clang++')
+        my_env["CC"] =  os.getenv('CLANGCC', 'clang')
+        my_env["CPP"] = os.getenv('CLANGCPP', 'clang -E')
+
     if "aarch64" in wine_target_arch64:
         # Wine bug #38719: https://bugs.winehq.org/show_bug.cgi?id=38719
         # 64-bit ARM Windows applications from Windows SDK for Windows 10 crash when accessing TEB/PEB members
         # (AArch64 platform specific register X18 must be reserved for TEB)
         wine_cflags_target_arch64 = "-ffixed-x18"
-        # Wine bug #38886: https://bugs.winehq.org/show_bug.cgi?id=38886
-        # needs arm64 specific __builtin_ms_va_list
-        # https://source.winehq.org/git/wine.git/commit/8fb8cc03c3edb599dd98f369e14a08f899cbff95
-        if my_env["CLANGCXX"].strip():
-            my_env["CXX"] = my_env["CLANGCXX"]
-        if my_env["CLANGCC"].strip():
-            my_env["CC"] = my_env["CLANGCC"]
-        if my_env["CLANGCPP"].strip():
-            my_env["CPP"] = my_env["CLANGCPP"]
+
     elif "x86_64" in wine_target_arch64:
         if args.enable_nopic:
             wine_cflags_target_arch64 = "-fno-PIC -mcmodel=large"
