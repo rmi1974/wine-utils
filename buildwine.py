@@ -480,6 +480,15 @@ def main():
     if wine_version >= Version("1.5.30") and wine_version < Version("1.7.54"):
         patch_apply(wine_variant_source_path, "a35f9a13a80fa93c251e12402a73a38a89ec397f")
 
+    # wpcap: Fix compilation with recent pcap/pcap.h versions.
+    # ERROR: In file included from .../include/winsock2.h:50,
+    #        from ... dlls/wpcap/wpcap.c:27:
+    #        .../include/ws2def.h:60:19: error: redefinition of ‘struct sockaddr_storage’
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/40c9b46500c3606e966d5404d45b68a48609b6ea
+    # FIXED: wine-4.3
+    if wine_version < Version("4.3"):
+        patch_apply(wine_variant_source_path, "40c9b46500c3606e966d5404d45b68a48609b6ea")
+
     # ERROR: /usr/bin/ld: chain.o:../dlls/crypt32/crypt32_private.h:155: multiple definition of `hInstance';
     #        cert.o:../dlls/crypt32/crypt32_private.h:155: first defined here
     # Fixup for GCC 10.x: https://gcc.gnu.org/gcc-10/porting_to.html#c
