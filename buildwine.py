@@ -62,9 +62,8 @@ def run_command_stdout(command, cwd=None, env=None):
                         cwd=cwd, env=env, shell=True, encoding="utf8").stdout.rstrip(os.linesep)
 
 def patch_apply(source_path, commit_id, exclude_pattern=""):
-    """ Apply a patch from Git commit into current branch using 'patch' tool.
-        The heuristics/fuzziness produces much better results with old Wine versions
-        than any git merge strategy. Optionally exclude parts of the patch.
+    """ Apply a patch from Git commit into current branch using 'git apply'.
+        Optionally exclude parts of the patch.
 
     Parameters:
         source_path (str): Path to source repository.
@@ -81,10 +80,10 @@ def patch_apply(source_path, commit_id, exclude_pattern=""):
     if not patchfile or not os.path.exists(os.path.normpath(os.path.join(source_path, patchfile))):
         sys.exit("Patch extraction of '{0}' failed, aborting!".format(commit_id))
 
-    patch_stdout = run_command_stdout("filterdiff -p1 -x '{0}' < {1} | patch -p1 --forward --no-backup-if-mismatch".format(
+    patch_stdout = run_command_stdout("filterdiff -p1 -x '{0}' < {1} | git apply".format(
                  exclude_pattern, patchfile), source_path)
     if "FAILED" in patch_stdout:
-        sys.exit("Patch '{0}' failed with output '{1}', aborting!".format(patchfile, patch_stdout))
+        sys.exit("Git apply '{0}' failed with output '{1}', aborting!".format(patchfile, patch_stdout))
     # "Reversed (or previously applied) patch detected!  Skipping patch." is not an error
 
 def main():
