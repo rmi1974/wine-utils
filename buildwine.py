@@ -77,7 +77,7 @@ def patch_apply(source_path, commit_id, exclude_pattern=""):
     """
 
     # extract the patch from Git checkout
-    patchfile = run_command_stdout("git format-patch -1 {0} 2> /dev/null".format(commit_id), source_path)
+    patchfile = run_command_stdout("git format-patch -1 --full-index --binary {0} 2> /dev/null".format(commit_id), source_path)
     if not patchfile or not os.path.exists(os.path.normpath(os.path.join(source_path, patchfile))):
         sys.exit("Patch extraction of '{0}' failed, aborting!".format(commit_id))
 
