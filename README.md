@@ -96,7 +96,7 @@ Build a range of Wine releases:
 
 ```shell
 # build Wine 1.7.[51..53]
-for i in 1.7.51 1.7.52 1.7.53 ; do ./buildwine.py --version=$i --clean ; done
+for i in 1.7.{51..53} ; do ./buildwine.py --version=$i --clean ; done
 
 # build Wine 1.7.[40..49]
 for i in `git -C mainline-src tag | sed -n 's/^wine-\(1.7.4[0-9]\)/\1/p' | \
