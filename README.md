@@ -121,9 +121,9 @@ Main benefits:
 Tarballs are available from [LLVM/Clang/LLD mingw-w64 release downloads][3].
 
 ```shell
-wget https://github.com/mstorsjo/llvm-mingw/releases/download/20200325/llvm-mingw-20200325-ubuntu-18.04.tar.xz
+wget https://github.com/mstorsjo/llvm-mingw/releases/download/20201020/llvm-mingw-20201020-ucrt-ubuntu-18.04.tar.xz
 
-tar xJvf llvm-mingw-20200325-ubuntu-18.04.tar.xz
+tar xJvf llvm-mingw-20201020-ucrt-ubuntu-18.04.tar.xz
 ```
 
 Make sure it can be found in path by prepending to the `PATH` environment variable.
@@ -185,7 +185,7 @@ Build Wine for target arch.
 [//]: # (invisible, for link references)
 [1]: https://gist.github.com/rmi1974/f4393f5df3e34dc8cae35e2974fd9cda
 [2]: https://github.com/mstorsjo/llvm-mingw
-[3]: https://github.com/mstorsjo/llvm-mingw/releases/download
+[3]: https://github.com/mstorsjo/llvm-mingw/releases
 [4]: https://github.com/rmi1974/meta-winedev
 [5]: https://bugs.winehq.org/show_bug.cgi?id=46053
 [6]: https://bugs.winehq.org/show_bug.cgi?id=46079
