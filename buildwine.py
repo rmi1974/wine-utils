@@ -544,7 +544,7 @@ def main():
     #        .../include/ws2def.h:60:19: error: redefinition of ‘struct sockaddr_storage’
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/40c9b46500c3606e966d5404d45b68a48609b6ea
     # FIXED: wine-4.3
-    if wine_version < Version("4.3"):
+    if wine_version >= Version("1.7.25") and wine_version < Version("4.3"):
         patch_apply(wine_variant_source_path, "40c9b46500c3606e966d5404d45b68a48609b6ea")
 
     # ERROR: /usr/bin/ld: chain.o:../dlls/crypt32/crypt32_private.h:155: multiple definition of `hInstance';
