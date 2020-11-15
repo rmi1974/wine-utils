@@ -510,6 +510,20 @@ def main():
     if wine_version < Version("1.9.10"):
         patch_apply(wine_variant_source_path, "ca8a08606d3f0900b3f4aa8f2e6547882a22dba8")
 
+    # Fix build failure for glibc 2.30+
+    # ERROR: dlls/ntdll/directory.c:145:19: error: conflicting types for ‘getdents64’
+    #         145 | static inline int getdents64( int fd, char *de, unsigned int size )
+    #        In file included from /usr/include/dirent.h:404,
+    #             from dlls/ntdll/directory.c:29:
+    #        /usr/include/bits/dirent_ext.h:29:18: note: previous declaration of ‘getdents64’ was here
+    #   29 | extern __ssize_t getdents64 (int __fd, void *__buffer, size_t __length)
+    # make[1]: *** [Makefile:393: directory.o] Error 1
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/12fc123338f7af601d3fe76b168a644fcd7e1362
+    # Smaller custom fix needed due to change buried in large rework commit.
+    # FIXED: wine-1.9.10
+    if wine_version < Version("1.9.10"):
+        patch_apply(wine_variant_source_path, "d189f95d71f1246a8683b14c5b64b0ec5308492f")
+
     # Freetype 2.8.1 build failures
     # ERROR: ../tools/sfnt2fon/sfnt2fon -o coure.fon .../mainline-src-2.17/fonts/courier.ttf -d 128 13,1252,8
     #        Error: Cannot open face .../mainline-src-2.17/fonts/courier.ttf
