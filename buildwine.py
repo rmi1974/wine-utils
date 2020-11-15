@@ -87,6 +87,30 @@ def patch_apply(source_path, commit_id, exclude_pattern=""):
         sys.exit("Patch '{0}' failed with output '{1}', aborting!".format(patchfile, patch_stdout))
     # "Reversed (or previously applied) patch detected!  Skipping patch." is not an error
 
+def bin_patch_apply(source_path, commit_id, exclude_pattern=""):
+    """ Apply a binary patch from Git commit into current branch using 'git apply'.
+
+    Parameters:
+        source_path (str): Path to source repository.
+        commit_id (str): Commit sha1 to generate patch from
+        exclude_pattern (str): Pattern for 'filterdiff' to exclude files
+
+    Returns:
+        none.
+
+    """
+
+    # extract the patch from Git checkout
+    patchfile = run_command_stdout("git format-patch -1 --full-index --binary {0} 2> /dev/null".format(commit_id), source_path)
+    if not patchfile or not os.path.exists(os.path.normpath(os.path.join(source_path, patchfile))):
+        sys.exit("Patch extraction of '{0}' failed, aborting!".format(commit_id))
+
+    patch_stdout = run_command_stdout("filterdiff -p1 -x '{0}' < {1} | git apply".format(
+                 exclude_pattern, patchfile), source_path)
+    if "FAILED" in patch_stdout:
+        sys.exit("Git apply '{0}' failed with output '{1}', aborting!".format(patchfile, patch_stdout))
+    # "Reversed (or previously applied) patch detected!  Skipping patch." is not an error
+
 def main():
 
     # Common workspace root path to Wine artifact directories: sources, build, install etc.
