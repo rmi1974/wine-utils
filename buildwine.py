@@ -479,6 +479,37 @@ def main():
     if wine_version >= Version("1.5.30") and wine_version < Version("1.7.54"):
         patch_apply(wine_variant_source_path, "a35f9a13a80fa93c251e12402a73a38a89ec397f")
 
+    # Fix build failure ('major' undefined) in glibc 2.28.
+    # ERROR: server/fd.c:922:9: warning: implicit declaration of function ‘major’ [-Wimplicit-function-declaration]
+    #                  922 |     if (major(dev) == FLOPPY_MAJOR) return 1;
+    #        /usr/bin/ld: fd.o: in function `is_device_removable':
+    #         server/fd.c:922: undefined reference to `major'
+    #         collect2: error: ld returned 1 exit status
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/ca8a08606d3f0900b3f4aa8f2e6547882a22dba8
+    # FIXED: wine-1.9.10
+    # Intermediate fixup because ca8a08606d3 doesn't apply cleanly on older Wine versions
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/3ae113a957d396d400a88259634e2870368f307b
+    if wine_version < Version("1.7.26"):
+        patch_apply(wine_variant_source_path, "3ae113a957d396d400a88259634e2870368f307b")
+    # Intermediate fixup because ca8a08606d3 doesn't apply cleanly on older Wine versions
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/5d65b9d0c2af38e11b59719f3888944ad29b41b1
+    if wine_version < Version("1.7.44"):
+        patch_apply(wine_variant_source_path, "5d65b9d0c2af38e11b59719f3888944ad29b41b1")
+    # Intermediate fixup because ca8a08606d3 doesn't apply cleanly on older Wine versions
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/f6926b35153888f85453856f3d3e74ac62ba3e70
+    if wine_version < Version("1.7.44"):
+        patch_apply(wine_variant_source_path, "f6926b35153888f85453856f3d3e74ac62ba3e70")
+    # Intermediate fixup because ca8a08606d3 doesn't apply cleanly on older Wine versions
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/bb89f10e5ed690abd191941a6ba5ecadb7d70c12
+    if wine_version < Version("1.7.44"):
+        patch_apply(wine_variant_source_path, "bb89f10e5ed690abd191941a6ba5ecadb7d70c12")
+    # Intermediate fixup because ca8a08606d3 doesn't apply cleanly on older Wine versions
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/67c2e06fcd7b49d21a61d9e17aa7e01a0503621b
+    if wine_version < Version("1.7.53"):
+        patch_apply(wine_variant_source_path, "67c2e06fcd7b49d21a61d9e17aa7e01a0503621b")
+    if wine_version < Version("1.9.10"):
+        patch_apply(wine_variant_source_path, "ca8a08606d3f0900b3f4aa8f2e6547882a22dba8")
+
     # Freetype 2.8.1 build failures
     # ERROR: ../tools/sfnt2fon/sfnt2fon -o coure.fon .../mainline-src-2.17/fonts/courier.ttf -d 128 13,1252,8
     #        Error: Cannot open face .../mainline-src-2.17/fonts/courier.ttf
