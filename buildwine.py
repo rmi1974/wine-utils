@@ -529,6 +529,10 @@ def main():
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/12fc123338f7af601d3fe76b168a644fcd7e1362
     # Smaller custom fix needed due to change buried in large rework commit.
     # FIXED: wine-1.9.10
+    # Intermediate fixup because d189f95d71f1246a doesn't apply cleanly on older Wine versions
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/3ae113a957d396d400a88259634e2870368f307b
+    if wine_version < Version("1.7.26"):
+        patch_apply(wine_variant_source_path, "3ae113a957d396d400a88259634e2870368f307b")
     if wine_version < Version("1.9.10"):
         patch_apply(wine_variant_source_path, "d189f95d71f1246a8683b14c5b64b0ec5308492f")
 
