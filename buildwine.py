@@ -357,6 +357,8 @@ def main():
     if args.version and not args.no_reset_source:
         # reset the tree to specific version
         run_command("git reset --hard wine-{0}".format(args.version), wine_mainline_source_path)
+        # removed any untracked files
+        run_command("git clean -dxf wine-{0}".format(args.version), wine_mainline_source_path)
 
     ##################################################################
     # Wine-Staging: set up two source source tree: upstream repo + mainline-patched-with-staging
