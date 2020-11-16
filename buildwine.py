@@ -553,7 +553,7 @@ def main():
         bin_patch_apply(wine_variant_source_path, "40166848a7944383a4cfdaac9b18bd03fbb2b4f9")
     # REBASE-FIX needed for 7ea82a02079d16 and 40166848a7944383a for older Wine versions
     if wine_version < Version("1.7.12"):
-        bin_patch_apply(wine_variant_source_path, "c3454616aebbe0bc3baf2f0d4b7f6a584c09dcb1")
+        bin_patch_apply(wine_variant_source_path, "a326e29144b74c0b3a0261142892192b99607141")
 
     # wpcap: Fix compilation with recent pcap/pcap.h versions.
     # ERROR: In file included from .../include/winsock2.h:50,
