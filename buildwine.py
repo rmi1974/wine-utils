@@ -560,6 +560,20 @@ def main():
         bin_patch_apply(wine_variant_source_path, "40166848a7944383a4cfdaac9b18bd03fbb2b4f9")
     # REBASE-FIX needed for 7ea82a02079d16 and 40166848a7944383a for older Wine versions
     # Apply prerequisite patches on older Wine versions because a326e29144b74c0b3a doesn't apply cleanly
+    if wine_version < Version("1.5.2"):
+        if wine_version != Version("1.4.1"):
+            # Wine 1.4.1 has this as cherry-pick:
+            # https://source.winehq.org/git/wine.git/commitdiff/1823a4ae52b970436943760f028e2c154fd9985d
+            bin_patch_apply(wine_variant_source_path, "4f819f8efcd08e29a1a7650300e204839b43af2c")
+        bin_patch_apply(wine_variant_source_path, "fc42bfe60f3a29c4ce0ed47eb03cc3125be904fd")
+    if wine_version < Version("1.5.16"):
+        bin_patch_apply(wine_variant_source_path, "679385fd1cd2c405ac0d3745863d827293a3b445")
+        bin_patch_apply(wine_variant_source_path, "673617ee4eb15aa778859d3bcc227e8d8a514e01")
+    if wine_version < Version("1.5.18"):
+        bin_patch_apply(wine_variant_source_path, "e070173ac6316cd9afc2755087d8e6b95b6cdafe")
+        bin_patch_apply(wine_variant_source_path, "1a6e9d4a50ec4a1a5464ca9c3bb02921d50eb777")
+    if wine_version < Version("1.5.20"):
+        bin_patch_apply(wine_variant_source_path, "9d71d29f26a6f89d4e603c60e355d2ed39153b7f")
     if wine_version < Version("1.5.25"):
         bin_patch_apply(wine_variant_source_path, "1b17f0fd5ded290a332260cad963dac53c08609f")
     if wine_version < Version("1.5.28"):
