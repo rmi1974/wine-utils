@@ -593,6 +593,16 @@ def main():
     if wine_version >= Version("1.7.25") and wine_version < Version("4.3"):
         patch_apply(wine_variant_source_path, "40c9b46500c3606e966d5404d45b68a48609b6ea")
 
+    # loader/preloader build failure with GCC 10.x optimizing wld_memset() into a memset(3) call.
+    # ERROR:  /usr/bin/ld: preloader.o: in function `wld_memset':
+    #          .../loader/preloader.c:455: undefined reference to `memset'
+    #          collect2: error: ld returned 1 exit status
+    #          make[1]: *** [Makefile:335: wine64-preloader] Error 1
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/a6fdf73233d3df4435680d921f68089630bc9c64
+    # FIXED: wine-1.5.21
+    if wine_version < Version("1.5.21"):
+        patch_apply(wine_variant_source_path, "a6fdf73233d3df4435680d921f68089630bc9c64")
+
     # ERROR: /usr/bin/ld: chain.o:../dlls/crypt32/crypt32_private.h:155: multiple definition of `hInstance';
     #        cert.o:../dlls/crypt32/crypt32_private.h:155: first defined here
     # Fixup for GCC 10.x: https://gcc.gnu.org/gcc-10/porting_to.html#c
