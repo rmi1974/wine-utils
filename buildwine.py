@@ -534,14 +534,18 @@ def main():
     # FIXED: wine-1.9.10
     # Intermediate fixup because d189f95d71f1246a doesn't apply cleanly on older Wine versions
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/606c88a348fa240359a25aa5a3659a0b41ee0cb4
-    if wine_version < Version("1.5.23"):
-        patch_apply(wine_variant_source_path, "606c88a348fa240359a25aa5a3659a0b41ee0cb4")
-    # Intermediate fixup because d189f95d71f1246a doesn't apply cleanly on older Wine versions
-    # GIT: https://source.winehq.org/git/wine.git/commitdiff/3ae113a957d396d400a88259634e2870368f307b
-    if wine_version < Version("1.7.26"):
-        patch_apply(wine_variant_source_path, "3ae113a957d396d400a88259634e2870368f307b")
-    if wine_version < Version("1.9.10"):
-        patch_apply(wine_variant_source_path, "d189f95d71f1246a8683b14c5b64b0ec5308492f")
+    if wine_version >= Version("1.5.11"):
+        if wine_version < Version("1.5.23"):
+            patch_apply(wine_variant_source_path, "606c88a348fa240359a25aa5a3659a0b41ee0cb4")
+        # Intermediate fixup because d189f95d71f1246a doesn't apply cleanly on older Wine versions
+        # GIT: https://source.winehq.org/git/wine.git/commitdiff/3ae113a957d396d400a88259634e2870368f307b
+        if wine_version < Version("1.7.26"):
+            patch_apply(wine_variant_source_path, "3ae113a957d396d400a88259634e2870368f307b")
+        if wine_version < Version("1.9.10"):
+            patch_apply(wine_variant_source_path, "d189f95d71f1246a8683b14c5b64b0ec5308492f")
+    else:
+        patch_apply(wine_variant_source_path, "cba95b7eb3986b201dfca5a3e6d9065edecb8188")
+
 
     # Freetype 2.8.1 build failures
     # ERROR: ../tools/sfnt2fon/sfnt2fon -o coure.fon .../mainline-src-2.17/fonts/courier.ttf -d 128 13,1252,8
