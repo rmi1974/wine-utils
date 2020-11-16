@@ -5,6 +5,7 @@
 
 import argparse
 import os
+import re
 import subprocess
 import sys
 import shutil
@@ -83,7 +84,7 @@ def patch_apply(source_path, commit_id, exclude_pattern=""):
 
     patch_stdout = run_command_stdout("filterdiff -p1 -x '{0}' < {1} | patch -p1 --forward --no-backup-if-mismatch 2>&1".format(
                  exclude_pattern, patchfile), source_path)
-    if "FAILED" in patch_stdout:
+    if any(re.findall(r'failed|error:', patch_stdout, re.IGNORECASE)):
         sys.exit("Patch '{0}' failed with output '{1}', aborting!".format(patchfile, patch_stdout))
     # "Reversed (or previously applied) patch detected!  Skipping patch." is not an error
 
@@ -107,7 +108,7 @@ def bin_patch_apply(source_path, commit_id, exclude_pattern=""):
 
     patch_stdout = run_command_stdout("filterdiff -p1 -x '{0}' < {1} | git apply 2>&1".format(
                  exclude_pattern, patchfile), source_path)
-    if "does not apply" in patch_stdout:
+    if any(re.findall(r'not apply|error:', patch_stdout, re.IGNORECASE)):
         sys.exit("Git apply '{0}' failed with output '{1}', aborting!".format(patchfile, patch_stdout))
     # "Reversed (or previously applied) patch detected!  Skipping patch." is not an error
 
