@@ -105,9 +105,9 @@ def bin_patch_apply(source_path, commit_id, exclude_pattern=""):
     if not patchfile or not os.path.exists(os.path.normpath(os.path.join(source_path, patchfile))):
         sys.exit("Patch extraction of '{0}' failed, aborting!".format(commit_id))
 
-    patch_stdout = run_command_stdout("filterdiff -p1 -x '{0}' < {1} | git apply".format(
+    patch_stdout = run_command_stdout("filterdiff -p1 -x '{0}' < {1} | git apply 2>&1".format(
                  exclude_pattern, patchfile), source_path)
-    if "FAILED" in patch_stdout:
+    if "does not apply" in patch_stdout:
         sys.exit("Git apply '{0}' failed with output '{1}', aborting!".format(patchfile, patch_stdout))
     # "Reversed (or previously applied) patch detected!  Skipping patch." is not an error
 
