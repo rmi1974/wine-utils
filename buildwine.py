@@ -555,6 +555,28 @@ def main():
         patch_apply(wine_variant_source_path, "7ea82a02079d1600191743cc2c148955efe725fb")
         bin_patch_apply(wine_variant_source_path, "40166848a7944383a4cfdaac9b18bd03fbb2b4f9")
     # REBASE-FIX needed for 7ea82a02079d16 and 40166848a7944383a for older Wine versions
+    # Apply prerequisite patches on older Wine versions because a326e29144b74c0b3a doesn't apply cleanly
+    if wine_version < Version("1.5.25"):
+        bin_patch_apply(wine_variant_source_path, "1b17f0fd5ded290a332260cad963dac53c08609f")
+    if wine_version < Version("1.5.28"):
+        bin_patch_apply(wine_variant_source_path, "6eaa345261fad0e0a0e04f265ce6f731302ed674")
+        bin_patch_apply(wine_variant_source_path, "c4408e0b621b99115247386e7095231be7e1045d")
+    if wine_version < Version("1.5.31"):
+        patch_apply(wine_variant_source_path, "d29f6c41eb13e647a311091956af3131633e7eda")
+        bin_patch_apply(wine_variant_source_path, "3f0e3ef6b4f422d0528d8031bbad3727face17dd")
+        bin_patch_apply(wine_variant_source_path, "8e2cd615c3dc884dc76bd75a77d35fc1fcaf8217")
+    if wine_version < Version("1.6-rc2"):
+        bin_patch_apply(wine_variant_source_path, "121f82bff7665794be6fee841ddfda6973cc7c46")
+        bin_patch_apply(wine_variant_source_path, "2fd3ec7d068ef925e5720222e92cfda4f6badd2a")
+    if wine_version < Version("1.6-rc5"):
+        bin_patch_apply(wine_variant_source_path, "74b2cb58f7f1192d6b0a7c1bc31a64eb92ccaa86")
+        bin_patch_apply(wine_variant_source_path, "66f641896b8056a818b06f07055d1161c36941c1")
+        bin_patch_apply(wine_variant_source_path, "eb29e639e579535009a4626fede64e3cf34e7009")
+        bin_patch_apply(wine_variant_source_path, "994f74fb46285130cc63784449176c748cfdfaaf")
+        bin_patch_apply(wine_variant_source_path, "7983df22cfd97399575652e72c90203597a818a7")
+        bin_patch_apply(wine_variant_source_path, "80a17baf20da4620394f8832f6221edf45b7a0f0")
+    # REBASE-FIX for 7ea82a02079d16 and 40166848a7944383a for older Wine versions
+
     if wine_version < Version("1.7.12"):
         bin_patch_apply(wine_variant_source_path, "a326e29144b74c0b3a0261142892192b99607141")
 
