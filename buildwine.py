@@ -558,6 +558,9 @@ def main():
     if wine_version >= Version("1.7.12") and wine_version < Version("2.18"):
         patch_apply(wine_variant_source_path, "89e79d8144308a24676ef069d567a14655985b0c")
     if wine_version < Version("2.18"):
+        if wine_version < Version("1.5.16"):
+            patch_apply(wine_variant_source_path, "8ef70039d366bf45900c7e7999767be2ccf9704c")
+            patch_apply(wine_variant_source_path, "7cd8dc6bf2b0d81338db9a6d13669b2f31da33d8")
         patch_apply(wine_variant_source_path, "d82321006de92dcd74465c905121618a76eae76a")
     if wine_version >= Version("1.7.12") and wine_version < Version("2.18"):
         patch_apply(wine_variant_source_path, "7ea82a02079d1600191743cc2c148955efe725fb")
