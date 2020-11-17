@@ -96,11 +96,11 @@ Build a range of Wine releases:
 
 ```shell
 # build Wine 1.7.[51..53]
-for i in 1.7.{51..53} ; do ./buildwine.py --version=$i --clean ; done
+for i in 1.7.{51..53} ; do ./buildwine.py --version=$i --clean || break ; done
 
 # build Wine 1.7.[40..49]
 for i in `git -C mainline-src tag | sed -n 's/^wine-\(1.7.4[0-9]\)/\1/p' | \
-    sort -V` ; do ./buildwine.py --version=$i --clean ; done
+    sort -V` ; do ./buildwine.py --version=$i --clean || break ; done
 ```
 
 To better diagnose/debug build failures, pass `--jobs=1` to the script.
