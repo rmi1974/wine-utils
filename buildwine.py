@@ -567,6 +567,11 @@ def main():
         bin_patch_apply(wine_variant_source_path, "40166848a7944383a4cfdaac9b18bd03fbb2b4f9")
     # REBASE-FIX needed for 7ea82a02079d16 and 40166848a7944383a for older Wine versions
     # Apply prerequisite patches on older Wine versions because a326e29144b74c0b3a doesn't apply cleanly
+    if wine_version < Version("1.4-rc1"):
+        bin_patch_apply(wine_variant_source_path, "3e6199904f4fc2bf1612f210e07e18435a46a38f")
+        bin_patch_apply(wine_variant_source_path, "5d2b9eb9d3e15c3787571000e6a75673a42a0c49")
+        bin_patch_apply(wine_variant_source_path, "a926bfdb061ffcdc3c6f88b29fca614f9f12fa78")
+        bin_patch_apply(wine_variant_source_path, "4b71072b861cc396c4c50806db034f98869e2cc1")
     if wine_version < Version("1.5.2"):
         if wine_version != Version("1.4.1"):
             # Wine 1.4.1 has this as cherry-pick:
