@@ -629,6 +629,15 @@ def main():
     if wine_version < Version("1.5.21"):
         patch_apply(wine_variant_source_path, "a6fdf73233d3df4435680d921f68089630bc9c64")
 
+    # /usr/bin/ld: ios.o: relocation R_X86_64_32 against symbol `basic_streambuf_char_overflow'
+    #          can not be used when making a shared object; recompile with -fPIC
+    #       make[1]: *** [Makefile:338: msvcp90.dll.so] Error 2
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/72999eac5b315102d3d7d48aaf6d687ca8ec8d96
+    #      https://source.winehq.org/git/wine.git/commitdiff/07a9909ccaea1e9626731c4b259f555877d50bb2
+    if wine_version < Version("1.3.35"):
+        patch_apply(wine_variant_source_path, "07a9909ccaea1e9626731c4b259f555877d50bb2")
+        patch_apply(wine_variant_source_path, "72999eac5b315102d3d7d48aaf6d687ca8ec8d96")
+
     # ERROR: /usr/bin/ld: chain.o:../dlls/crypt32/crypt32_private.h:155: multiple definition of `hInstance';
     #        cert.o:../dlls/crypt32/crypt32_private.h:155: first defined here
     # Fixup for GCC 10.x: https://gcc.gnu.org/gcc-10/porting_to.html#c
