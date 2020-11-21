@@ -638,6 +638,24 @@ def main():
         patch_apply(wine_variant_source_path, "07a9909ccaea1e9626731c4b259f555877d50bb2")
         patch_apply(wine_variant_source_path, "72999eac5b315102d3d7d48aaf6d687ca8ec8d96")
 
+    # libxml2 fixes
+    #  ../dlls/msxml3/mxwriter.c:412:60: error: invalid use of incomplete typedef â€˜xmlBufâ€™ {aka â€˜struct _xmlBufâ€™}
+    #    412 |                                          This->buffer->conv->use/sizeof(WCHAR));
+    #    make[1]: *** [Makefile:215: mxwriter.o] Error 1
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/a4b24978e9dc2e54057552fc2efffbd58cc25d0a
+    #      https://source.winehq.org/git/wine.git/commitdiff/197d41156a1a237eb2073524ec36006d6a26ceaa
+    #      https://source.winehq.org/git/wine.git/commitdiff/b0f704daaf633d8c713c9212a2ab5dd8a4457e7a
+    #      https://source.winehq.org/git/wine.git/commitdiff/d80ee5b3ae36275f813b096576b5beecea2c2d60
+    #      https://source.winehq.org/git/wine.git/commitdiff/fda8c2177d01c767c020864370cf9dfaf7b6755d
+    #      https://source.winehq.org/git/wine.git/commitdiff/35c7c694294d5461b84e18b17b65a99068050e8b
+    if wine_version < Version("1.3.35"):
+        patch_apply(wine_variant_source_path, "a4b24978e9dc2e54057552fc2efffbd58cc25d0a")
+        patch_apply(wine_variant_source_path, "197d41156a1a237eb2073524ec36006d6a26ceaa")
+        patch_apply(wine_variant_source_path, "b0f704daaf633d8c713c9212a2ab5dd8a4457e7a")
+        patch_apply(wine_variant_source_path, "d80ee5b3ae36275f813b096576b5beecea2c2d60")
+        patch_apply(wine_variant_source_path, "fda8c2177d01c767c020864370cf9dfaf7b6755d")
+        patch_apply(wine_variant_source_path, "35c7c694294d5461b84e18b17b65a99068050e8b")
+
     # ERROR: /usr/bin/ld: chain.o:../dlls/crypt32/crypt32_private.h:155: multiple definition of `hInstance';
     #        cert.o:../dlls/crypt32/crypt32_private.h:155: first defined here
     # Fixup for GCC 10.x: https://gcc.gnu.org/gcc-10/porting_to.html#c
