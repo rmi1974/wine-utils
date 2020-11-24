@@ -704,6 +704,10 @@ def main():
 
         run_command("make install | tee -a {0}".format(logfile), wine_build_target_arch64_path, my_env)
 
+        # copy the PDB files into install DESTDIR
+        run_command("find {0} -type f -name '*.pdb' -exec cp -v '{{}}' '{1}/lib64/wine' \;".format(
+            wine_build_target_arch64_path, wine_install_prefix))
+
     ##################################################################
     # build and install 32-bit Wine
     if wine_build_target_arch32_path:
@@ -728,6 +732,10 @@ def main():
         # make a lib32 symlink to lib to allow winegcc -m32
         # relative so the prefix can be moved around
         os.symlink("lib", "{0}/lib32".format(wine_install_prefix))
+
+        # copy the PDB files into install DESTDIR
+        run_command("find {0} -type f -name '*.pdb' -exec cp -v '{{}}' '{1}/lib/wine' \;".format(
+            wine_build_target_arch32_path, wine_install_prefix))
 
     print(
     """
