@@ -656,6 +656,13 @@ def main():
         patch_apply(wine_variant_source_path, "fda8c2177d01c767c020864370cf9dfaf7b6755d")
         patch_apply(wine_variant_source_path, "35c7c694294d5461b84e18b17b65a99068050e8b")
 
+    # ERROR: 'err:msi:MSI_OpenDatabaseW unknown flag (nil)' ... 'err:msi:msi_apply_patch_package
+    # Fixup for GCC 9.x/10.x/MinGW
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/cce9a5f124ae6d3fffcc7772cab6523f09a1e3d1
+    # FIXED: wine-4.20
+    if wine_version < Version("4.20"):
+        patch_apply(wine_variant_source_path, "cce9a5f124ae6d3fffcc7772cab6523f09a1e3d1")
+
     # GCC/LLVM Clang 10.x compat fixes: lld-link: error: duplicate symbol: xxx
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/5740b735cdb44fb89a41f3090dcc3dabf360ab41
     #      https://source.winehq.org/git/wine.git/commitdiff/fba65a153759dd60f470fe9a787f074cbf0f7ea8
