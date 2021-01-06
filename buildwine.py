@@ -666,7 +666,8 @@ def main():
     # Fixup for GCC 9.x/10.x/MinGW
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/cce9a5f124ae6d3fffcc7772cab6523f09a1e3d1
     # FIXED: wine-4.20
-    if wine_version < Version("4.20"):
+    # MSI changes in Wine 1.7.38 and 1.7.39 make patch/rebase way too much effort hence skip fix below
+    if wine_version >= Version("1.7.40") and wine_version < Version("4.20"):
         patch_apply(wine_variant_source_path, "cce9a5f124ae6d3fffcc7772cab6523f09a1e3d1")
 
     # GCC/LLVM Clang 10.x compat fixes: lld-link: error: duplicate symbol: xxx
