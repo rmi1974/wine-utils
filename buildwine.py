@@ -355,7 +355,7 @@ def main():
         run_command("git clone --shared {0} {1}".format(wine_local_clone_source, wine_mainline_source_path))
 
     # reset mainline source tree when version has been specified
-    if args.version and not args.no_reset_source:
+    if args.version and args.variant != "staging" and not args.no_reset_source:
         # reset the tree to specific version
         run_command("git reset --hard wine-{0}".format(args.version), wine_mainline_source_path)
         # removed any untracked files
