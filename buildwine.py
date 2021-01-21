@@ -260,9 +260,10 @@ def main():
             # with Windows binaries. This won't work for hardfp toolchains.
             cc_opt_floatabi = run_command_stdout(r"$CC -Q --help=target | grep -m1 -oP '\bmfloat-abi=\s+\K\w+'")
             cc_opt_fpu = run_command_stdout(r"$CC -Q --help=target | grep -m1 -oP '\bmfpu=\s+\K\w+'")
+            cc_opt_arch = run_command_stdout(r"$CC -Q --help=target | grep -m1 -oP '\bmarch=\s+\K\w+'")
 
             wine_cross_compile_options += " --with-float-abi={0}".format(cc_opt_floatabi)
-            my_env["EXTRA_TARGETFLAGS"] = "-mfpu={0}".format(cc_opt_fpu)
+            my_env["EXTRA_TARGETFLAGS"] = "-march={0} -mfpu={1}".format(cc_opt_arch, cc_opt_fpu)
 
         elif "aarch64" in wine_target_arch:
             wine_target_arch32 = ""
