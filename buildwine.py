@@ -238,6 +238,18 @@ def main():
     wine_target_arch64 = wine_host_arch64
     wine_target_arch32 = wine_host_arch32
 
+    # Since Wine 6.8, libraries are installed into architecture-specific subdirectories.
+    if wine_version >= Version("6.8"):
+        wine_install_arch32_pe_dir = "lib/wine/i386-windows"
+        wine_install_arch32_so_dir = "lib/wine/i386-unix"
+        wine_install_arch64_pe_dir = "lib/wine/x86_64-windows"
+        wine_install_arch64_so_dir = "lib/wine/x86_64-unix"
+    else:
+        wine_install_arch32_pe_dir = "lib/wine"
+        wine_install_arch32_so_dir = "lib/wine"
+        wine_install_arch64_pe_dir = "lib64/wine"
+        wine_install_arch64_so_dir = "lib64/wine"
+
     ##################################################################
     # cross-compile setup
     wine_cross_compile_options = ""
@@ -256,6 +268,8 @@ def main():
         if "arm" in wine_target_arch:
             wine_target_arch32 = wine_target_arch
             wine_target_arch64 = ""
+            wine_install_arch32_pe_dir = "/arm-windows"
+            wine_install_arch32_so_dir = "/arm-unix"
             # On 32-bit ARM, the floating point ABI defaults to 'softfp' for compatibility
             # with Windows binaries. This won't work for hardfp toolchains.
             cc_opt_floatabi = run_command_stdout(r"$CC -Q --help=target | grep -m1 -oP '\bmfloat-abi=\s+\K\w+'")
@@ -268,6 +282,8 @@ def main():
         elif "aarch64" in wine_target_arch:
             wine_target_arch32 = ""
             wine_target_arch64 = wine_target_arch
+            wine_install_arch64_pe_dir = "/aarch64-windows"
+            wine_install_arch64_so_dir = "/aarch64-unix"
         else:
             sys.exit("Unsupported target architecture '{0}', aborting!".format(wine_target_arch))
 
@@ -748,9 +764,9 @@ def main():
 
         run_command("make install | tee -a {0}".format(logfile), wine_build_target_arch64_path, my_env)
 
-        # copy the PDB files into install DESTDIR
-        run_command("find {0} -type f -name '*.pdb' -exec cp -v '{{}}' '{1}/lib64/wine' \;".format(
-            wine_build_target_arch64_path, wine_install_prefix))
+        # Copy the PDB files into install DESTDIR.
+        run_command("find {0} -type f -name '*.pdb' -exec cp -v '{{}}' '{1}/{2}' \;".format(
+            wine_build_target_arch64_path, wine_install_prefix, wine_install_arch64_pe_dir))
 
     ##################################################################
     # build and install 32-bit Wine
@@ -773,13 +789,14 @@ def main():
 
         run_command("make install | tee -a {0}".format(logfile), wine_build_target_arch32_path, my_env)
 
-        # make a lib32 symlink to lib to allow winegcc -m32
-        # relative so the prefix can be moved around
-        os.symlink("lib", "{0}/lib32".format(wine_install_prefix))
+        # Make a lib32 symlink to lib to allow 'winegcc -m32'.
+        # Since Wine 6.8, libraries are installed into architecture-specific subdirectories.
+        if wine_version < Version("6.8"):
+            os.symlink("lib", "{0}/lib32".format(wine_install_prefix))
 
-        # copy the PDB files into install DESTDIR
-        run_command("find {0} -type f -name '*.pdb' -exec cp -v '{{}}' '{1}/lib/wine' \;".format(
-            wine_build_target_arch32_path, wine_install_prefix))
+        # Copy the PDB files into install DESTDIR.
+        run_command("find {0} -type f -name '*.pdb' -exec cp -v '{{}}' '{1}/{2}' \;".format(
+            wine_build_target_arch32_path, wine_install_prefix, wine_install_arch32_pe_dir))
 
     print(
     """
