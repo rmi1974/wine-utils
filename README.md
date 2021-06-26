@@ -120,13 +120,7 @@ Main benefits:
 
 Tarballs are available from [LLVM/Clang/LLD mingw-w64 release downloads][3].
 
-```shell
-wget https://github.com/mstorsjo/llvm-mingw/releases/download/20201020/llvm-mingw-20201020-ucrt-ubuntu-18.04.tar.xz
-
-tar xJvf llvm-mingw-20201020-ucrt-ubuntu-18.04.tar.xz
-```
-
-Make sure it can be found in path by prepending to the `PATH` environment variable.
+Make sure it can be found in path by prepending the `bin` directory from the unpacked tarball to the `PATH` environment variable.
 
 ### Cross-compiling using Poky SDK cross-toolchain
 
