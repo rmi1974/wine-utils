@@ -292,7 +292,11 @@ def main():
         my_env["PKG_CONFIG"] = shutil.which("pkg-config")
 
     # common CFLAGS
-    wine_cflags_common = "-g -O2"
+    wine_cflags_common = "-O2 -g"
+    # Wine 6.21 added dwarf4 debug format support in dbghelp
+    if wine_version >= Version("6.21"):
+        wine_cflags_common += " -gdwarf-4"
+
     # Set up target arch specific CFLAGS which are not cross-compile dependent
     wine_cflags_target_arch64 = ""
     wine_cflags_target_arch32 = ""
@@ -334,6 +338,9 @@ def main():
         my_env["CROSSDEBUG"] = "pdb"
     else:
         my_env["CROSSCFLAGS"] = "-g -gcodeview -O2"
+        # Wine 6.21 added dwarf4 debug format support in dbghelp
+        if wine_version >= Version("6.21"):
+            my_env["CROSSCFLAGS"] = "-gdwarf-4 -O2"
         my_env["CROSSLDFLAGS"] = "-Wl,-pdb="
 
     # target arch specific build and install paths
