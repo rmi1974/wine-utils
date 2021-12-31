@@ -327,21 +327,22 @@ def main():
         if args.enable_nopic:
             wine_cflags_target_arch32 = "-fno-PIC"
 
-    # LLVM based MinGW toolchain settings (https://github.com/mstorsjo/llvm-mingw)
-    # - enable ASLR support
-    # Currently not supported by Wine loader: https://bugs.winehq.org/show_bug.cgi?id=48417
-    my_env["CROSSLDFLAGS"] = " -Wl,--dynamicbase"
-    # - generate debug symbols in PDB format
-    # GIT: https://source.winehq.org/git/wine.git/commit/83d00d328f58f910a9b197e0a465b110cbdc727c
-    if wine_version >= Version("5.9"):
-        # Support split debug for cross compiled modules
-        my_env["CROSSDEBUG"] = "pdb"
-    else:
-        my_env["CROSSCFLAGS"] = "-g -gcodeview -O2"
-        # Wine 6.21 added dwarf4 debug format support in dbghelp
-        if wine_version >= Version("6.21"):
-            my_env["CROSSCFLAGS"] = "-gdwarf-4 -O2"
-        my_env["CROSSLDFLAGS"] = "-Wl,-pdb="
+    if not args.disable_mingw:
+        # LLVM based MinGW toolchain settings (https://github.com/mstorsjo/llvm-mingw)
+        # - enable ASLR support
+        # Currently not supported by Wine loader: https://bugs.winehq.org/show_bug.cgi?id=48417
+        my_env["CROSSLDFLAGS"] = " -Wl,--dynamicbase"
+        # - generate debug symbols in PDB format
+        # GIT: https://source.winehq.org/git/wine.git/commit/83d00d328f58f910a9b197e0a465b110cbdc727c
+        if wine_version >= Version("5.9"):
+            # Support split debug for cross compiled modules
+            my_env["CROSSDEBUG"] = "pdb"
+        else:
+            my_env["CROSSCFLAGS"] = "-g -gcodeview -O2"
+            # Wine 6.21 added dwarf4 debug format support in dbghelp
+            if wine_version >= Version("6.21"):
+                my_env["CROSSCFLAGS"] = "-gdwarf-4 -O2"
+            my_env["CROSSLDFLAGS"] = "-Wl,-pdb="
 
     # target arch specific build and install paths
     wine_build_target_arch32_path = ""
