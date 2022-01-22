@@ -343,6 +343,9 @@ def main():
             if wine_version >= Version("6.21"):
                 my_env["CROSSCFLAGS"] = "-gdwarf-4 -O2"
             my_env["CROSSLDFLAGS"] = "-Wl,-pdb="
+        # Use clang MSVC mode to emit 'movl %edi,%edi' prologue
+        # https://github.com/llvm/llvm-project/blob/main/llvm/lib/Target/X86/X86MCInstLower.cpp#L1386
+        my_env["CROSSCC"] = "clang"
 
     # target arch specific build and install paths
     wine_build_target_arch32_path = ""
