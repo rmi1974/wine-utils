@@ -740,6 +740,11 @@ def main():
     if wine_version == Version("6.20"):
         patch_apply(wine_variant_source_path, "981306c1f01112719850439a74e13693dfa6d3a4")
 
+    # opencl: Fix compilation on MSVC targets.
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/a91d6e9eae71a0ed0ddeac3d571704fd3e47b3c5
+    if wine_version >= Version("6.5") and wine_version < Version("6.19"):
+        patch_apply(wine_variant_source_path, "a91d6e9eae71a0ed0ddeac3d571704fd3e47b3c5")
+
     ##################################################################
     # clean build directories if requested
     if args.clean:
