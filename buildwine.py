@@ -735,6 +735,11 @@ def main():
     if wine_version < Version("5.1"):
         wine_cflags_common += " -fcommon"
 
+    # mpg123: Fix compilation with clang.
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/981306c1f01112719850439a74e13693dfa6d3a4
+    if wine_version == Version("6.20"):
+        patch_apply(wine_variant_source_path, "981306c1f01112719850439a74e13693dfa6d3a4")
+
     ##################################################################
     # clean build directories if requested
     if args.clean:
