@@ -10,6 +10,8 @@ import subprocess
 import sys
 import shutil
 import packaging
+import tempfile
+import stat
 
 # Wine project upstream repos
 WINE_MAINLINE_GIT_URI = "git://source.winehq.org/git/wine.git"
@@ -111,6 +113,38 @@ def bin_patch_apply(source_path, commit_id, exclude_pattern=""):
     if any(re.findall(r'not apply|error:', patch_stdout, re.IGNORECASE)):
         sys.exit("Git apply '{0}' failed with output '{1}', aborting!".format(patchfile, patch_stdout))
     # "Reversed (or previously applied) patch detected!  Skipping patch." is not an error
+
+def create_config_wrapper(org_config, arg_filter, output_remove):
+    """ Create a shell wrapper in /tmp for pkg-config, freetype-config etc. to fix broken cflags.
+
+    Parameters:
+        org_config (str): Path to original pkg-config, freetype-config etc.
+        arg_filter (str): Argument pattern to filter output for.
+        output_replace (str): Output pattern to remove.
+
+    Returns:
+        Full path to new config wrapper script.
+
+    """
+
+    content = """#!/bin/bash
+result=`{org_config} "$@"`
+if [[ "$@" =~ "{arg_filter}" ]] ; then
+  echo "${{result//{output_remove}/}}"
+else
+  echo "$result"
+fi
+""".format( org_config=org_config, arg_filter=arg_filter, output_remove=output_remove)
+
+    # Create the wrapper in /tmp/<random>/<org_config> to ensure uniqueness but same basename.
+    # It also supports nested 'pkg-config' use-cases. Each created wrapper can call the previous wrapper
+    # which at one point calls the original 'pkg-config' from first created wrapper (in sequence).
+    # Each wrapper would filter out it's own pattern.
+    config_wrapper = os.path.join(tempfile.mkdtemp(), os.path.basename(org_config))
+    with open(config_wrapper, 'w') as f:
+        f.write( content)
+    os.chmod(config_wrapper, os.stat(config_wrapper).st_mode | stat.S_IEXEC)
+    return config_wrapper
 
 def main():
 
@@ -287,9 +321,9 @@ def main():
         else:
             sys.exit("Unsupported target architecture '{0}', aborting!".format(wine_target_arch))
 
-        # Provide full path to cross pkg-config
-        # Due to SDK environment script PATH injection, the cross-host pkg-config is found before
-        my_env["PKG_CONFIG"] = shutil.which("pkg-config")
+    # Provide full path to cross pkg-config
+    # Due to SDK environment script PATH injection, the cross-host pkg-config is found before
+    my_env["PKG_CONFIG"] = shutil.which("pkg-config")
 
     # common CFLAGS
     wine_cflags_common = "-O2 -g"
@@ -755,6 +789,21 @@ def main():
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/a91d6e9eae71a0ed0ddeac3d571704fd3e47b3c5
     if wine_version >= Version("6.5") and wine_version < Version("6.19"):
         patch_apply(wine_variant_source_path, "a91d6e9eae71a0ed0ddeac3d571704fd3e47b3c5")
+
+    # ERROR: tools/wrc/wrc -u -o dlls/gdi32/gdi32.res -m64 --nostdinc --po-dir=po -Idlls/gdi32 \
+    #        -I/usr/lib64/glib-2.0/include -I/usr/include/sysprof-4 -I/usr/include/libxml2 -D__WINESRC__ \
+    #        -pthread -D_GDI32_ -D_UCRT .../dlls/gdi32/gdi32.rc
+    #        tools/wrc/wrc: invalid option -- 'p'
+    #        tools/wrc/wrc: invalid option -- 't'
+    # URL: https://bugs.winehq.org/show_bug.cgi?id=50811
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/4f04994ef47b5077e13c1b770ed0f818f59adcd5
+    # FIXED: wine-6.6
+    if wine_version <= Version("6.5"):
+        # needed for erroneous FREETYPE_CFLAGS
+        my_env["PKG_CONFIG"] = create_config_wrapper(my_env["PKG_CONFIG"], "--cflags freetype2", "-pthread")
+        # needed for erroneous FONTCONFIG_CFLAGS
+        # NOTE: The second wrapper will call the first wrapper which in turn will call the original pkg-config
+        my_env["PKG_CONFIG"] = create_config_wrapper(my_env["PKG_CONFIG"], "--cflags fontconfig", "-pthread")
 
     ##################################################################
     # clean build directories if requested
