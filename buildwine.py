@@ -814,6 +814,15 @@ def main():
     if wine_version == Version("5.2"):
         patch_apply(wine_variant_source_path, "f29d4a43e203303c2d4aaec388f281d01f17764c")
 
+    # ERROR: /usr/bin/ld: dlls/dnsapi/libresolv.o: in function `resolv_query':
+    #        .../dlls/dnsapi/libresolv.c:897: undefined reference to `ns_initparse'
+    #       /usr/bin/ld: .../dlls/dnsapi/libresolv.c:769: undefined reference to `ns_parserr'
+    # URL: https://bugs.winehq.org/show_bug.cgi?id=51635
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/a3bbf5137707abb548ff642826992b7069bef1de
+    # FIXED: wine-6.16
+    if wine_version >= Version("6.6") and wine_version < Version("6.16"):
+        patch_apply(wine_variant_source_path, "a3bbf5137707abb548ff642826992b7069bef1de")
+
     ##################################################################
     # clean build directories if requested
     if args.clean:
