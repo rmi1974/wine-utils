@@ -251,8 +251,10 @@ def main():
     # default options passed to 'configure'
     configure_options = ""
     # LLVM-based MinGW integration and PDB support is usable since Wine 5.0
-    if wine_version < Version("5.0"):
-         args.disable_mingw = True
+    # Configure fixup required for newer LLVM MinGW 12.x doesn't apply cleanly hence exclude Wine 5.0, 5.1
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/f29d4a43e203303c2d4aaec388f281d01f17764c
+    if wine_version <= Version("5.1"):
+        args.disable_mingw = True
     # MinGW cross-compiler option '--with-mingw' was added with Wine 4.6
     if wine_version >= Version("4.6"):
         configure_options += " --without-mingw" if args.disable_mingw else " --with-mingw"
@@ -804,6 +806,13 @@ def main():
         # needed for erroneous FONTCONFIG_CFLAGS
         # NOTE: The second wrapper will call the first wrapper which in turn will call the original pkg-config
         my_env["PKG_CONFIG"] = create_config_wrapper(my_env["PKG_CONFIG"], "--cflags fontconfig", "-pthread")
+
+    # ERROR: winebuild: llvm-mingw-20211002-ucrt-ubuntu-18.04-x86_64/bin/x86_64-w64-mingw32-dlltool failed with status 1
+    #        make: *** [Makefile:1843: dlls/advpack/libadvpack.delay.a] Error 1
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/f29d4a43e203303c2d4aaec388f281d01f17764c
+    # FIXED: wine-5.3
+    if wine_version == Version("5.2"):
+        patch_apply(wine_variant_source_path, "f29d4a43e203303c2d4aaec388f281d01f17764c")
 
     ##################################################################
     # clean build directories if requested
