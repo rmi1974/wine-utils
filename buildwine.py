@@ -345,7 +345,18 @@ def main():
             my_env["CROSSLDFLAGS"] = "-Wl,-pdb="
         # Use clang MSVC mode to emit 'movl %edi,%edi' prologue
         # https://github.com/llvm/llvm-project/blob/main/llvm/lib/Target/X86/X86MCInstLower.cpp#L1386
-        my_env["CROSSCC"] = "clang"
+        #
+        # Only enable it on MinGW builds if Wine >= 6.0 to avoid error:
+        #
+        #    Use configure:10505: checking whether the compiler supports -Wl,-delayload,autoconftest.dll
+        #    configure:10516: clang -o conftest -g -gcodeview -O2 -Werror=unknown-warning-option -Wl,-delayload,autoconftest.dll   conftest.c  >&5
+        #    /usr/bin/ld: Error: unable to disambiguate: -delayload (did you mean --delayload ?)
+        #    clang-13: error: linker command failed with exit code 1 (use -v to see invocation)
+        #
+        # GIT: https://source.winehq.org/git/wine.git/commitdiff/4b362d016c57c14570efeb9c38dfcc5cf2c0910d
+        # FIXED: Wine 6.0
+        if wine_version >= Version("6.0"):
+            my_env["CROSSCC"] = "clang"
 
     # target arch specific build and install paths
     wine_build_target_arch32_path = ""
