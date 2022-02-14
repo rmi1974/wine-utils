@@ -747,33 +747,6 @@ def main():
     if wine_version >= Version("1.7.40") and wine_version < Version("4.20"):
         patch_apply(wine_variant_source_path, "cce9a5f124ae6d3fffcc7772cab6523f09a1e3d1")
 
-    # GCC/LLVM Clang 10.x compat fixes: lld-link: error: duplicate symbol: xxx
-    # GIT: https://source.winehq.org/git/wine.git/commitdiff/5740b735cdb44fb89a41f3090dcc3dabf360ab41
-    #      https://source.winehq.org/git/wine.git/commitdiff/fba65a153759dd60f470fe9a787f074cbf0f7ea8
-    #      https://source.winehq.org/git/wine.git/commitdiff/e402fdf364fc76838ba4e11a11fef3c552110639
-    #      https://source.winehq.org/git/wine.git/commitdiff/93888fbb3e4d973f5878a0aab16a9d64fb73a764
-    #      https://source.winehq.org/git/wine.git/commitdiff/388348ddbf7d138fed3a6fe48bf6666a95ef3528
-    #      https://source.winehq.org/git/wine.git/commitdiff/da21c305164c3e585e29e20242afc5a31f91989f
-    #      https://source.winehq.org/git/wine.git/commitdiff/44e69405adcdc98d6b0777e6c0acb2697d776ef8
-    #      https://source.winehq.org/git/wine.git/commitdiff/4a91eb362666b3af549c48b95e093051756628e0
-    #      https://source.winehq.org/git/wine.git/commitdiff/cc7f698b8245a48669d248569e7589ff824f2c70
-    #      https://source.winehq.org/git/wine.git/commitdiff/bc51c5d589de709e1d393b58b0cc5985c78061ac
-    #      https://source.winehq.org/git/wine.git/commitdiff/453980e13015e20dd551531be69b3361b63f22b1
-    #      https://source.winehq.org/git/wine.git/commitdiff/c13d58780f78393571dfdeb5b4952e3dcd7ded90
-    if wine_version == Version("5.0"):
-        patch_apply(wine_variant_source_path, "5740b735cdb44fb89a41f3090dcc3dabf360ab41")
-        patch_apply(wine_variant_source_path, "fba65a153759dd60f470fe9a787f074cbf0f7ea8")
-        patch_apply(wine_variant_source_path, "e402fdf364fc76838ba4e11a11fef3c552110639")
-        patch_apply(wine_variant_source_path, "93888fbb3e4d973f5878a0aab16a9d64fb73a764")
-        patch_apply(wine_variant_source_path, "388348ddbf7d138fed3a6fe48bf6666a95ef3528")
-        patch_apply(wine_variant_source_path, "da21c305164c3e585e29e20242afc5a31f91989f")
-        patch_apply(wine_variant_source_path, "44e69405adcdc98d6b0777e6c0acb2697d776ef8")
-        patch_apply(wine_variant_source_path, "4a91eb362666b3af549c48b95e093051756628e0")
-        patch_apply(wine_variant_source_path, "cc7f698b8245a48669d248569e7589ff824f2c70")
-        patch_apply(wine_variant_source_path, "bc51c5d589de709e1d393b58b0cc5985c78061ac")
-        patch_apply(wine_variant_source_path, "453980e13015e20dd551531be69b3361b63f22b1")
-        patch_apply(wine_variant_source_path, "c13d58780f78393571dfdeb5b4952e3dcd7ded90")
-
     # ERROR: /usr/bin/ld: chain.o:../dlls/crypt32/crypt32_private.h:155: multiple definition of `hInstance';
     #        cert.o:../dlls/crypt32/crypt32_private.h:155: first defined here
     # Fixup for GCC 10.x: https://gcc.gnu.org/gcc-10/porting_to.html#c
