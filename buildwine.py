@@ -829,6 +829,15 @@ def main():
     if wine_version >= Version("6.6") and wine_version < Version("6.16"):
         patch_apply(wine_variant_source_path, "a3bbf5137707abb548ff642826992b7069bef1de")
 
+    # ERROR: ../../tools/winegcc/winegcc -o ntdll.dll.so -B../../tools/winebuild -m64 -fasynchronous-unwind-tables -shared
+    #        mainline-src-1.7.45/dlls/ntdll/ntdll.spec \
+    #        ...
+    #        /usr/bin/ld: signal_x86_64.o: in function `libunwind_virtual_unwind':
+    #        mainline-src-1.7.45/dlls/ntdll/signal_x86_64.c:1554: undefined reference to `_Ux86_64_getcontext'
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/36a9f9dd05c3b9df77c44c91663e9bd6cae1c848
+    if wine_version == Version("1.7.45"):
+        patch_apply(wine_variant_source_path, "36a9f9dd05c3b9df77c44c91663e9bd6cae1c848")
+
     ##################################################################
     # clean build directories if requested
     if args.clean:
