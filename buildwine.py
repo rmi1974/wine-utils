@@ -806,6 +806,12 @@ def main():
         # needed for erroneous FONTCONFIG_CFLAGS
         # NOTE: The second wrapper will call the first wrapper which in turn will call the original pkg-config
         my_env["PKG_CONFIG"] = create_config_wrapper(my_env["PKG_CONFIG"], "--cflags fontconfig", "-pthread")
+        # needed for erroneous FREETYPEINCL
+        if wine_version < Version("1.5.2"):
+            # original config tool is provided with full path so wrapper doesn't create a recursion
+            wrapper_path = os.path.dirname( create_config_wrapper(shutil.which("freetype-config"), "--cflags", "-pthread"))
+            # inject wrapper into PATH
+            my_env["PATH"] = "{0}:{1}".format(wrapper_path, my_env["PATH"])
 
     # ERROR: winebuild: llvm-mingw-20211002-ucrt-ubuntu-18.04-x86_64/bin/x86_64-w64-mingw32-dlltool failed with status 1
     #        make: *** [Makefile:1843: dlls/advpack/libadvpack.delay.a] Error 1
