@@ -531,7 +531,9 @@ def main():
     # FIXED: wine-2.13
     # wpcap code introduced by: https://source.winehq.org/git/wine.git/commitdiff/fa67586811765d88d3b4108b3e5b4e51bb07868f
     if wine_version >= Version("1.7.25") and wine_version < Version("2.13"):
-        patch_apply(wine_variant_source_path, "28173f06932edd85a64a952120d29b9bb1e762ea")
+        # stable > 2.0.2 already has cherry-pick as 773cad9f16ecc9aaf751e05cdf2f6f408c582305
+        if wine_version not in [Version("2.0.3"), Version("2.0.4"), Version("2.0.5")]:
+            bin_patch_apply(wine_variant_source_path, "28173f06932edd85a64a952120d29b9bb1e762ea")
 
     # wine-1.5.30-x86_64/bin/wine:
     #       error while loading shared libraries: libwine.so.1: cannot open shared object file: No such file or directory
