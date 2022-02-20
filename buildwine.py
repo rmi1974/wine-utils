@@ -762,7 +762,7 @@ def main():
 
     # opencl: Fix compilation on MSVC targets.
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/a91d6e9eae71a0ed0ddeac3d571704fd3e47b3c5
-    if wine_version >= Version("6.5") and wine_version < Version("6.19"):
+    if wine_version >= Version("6.5") and wine_version < Version("6.18"):
         patch_apply(wine_variant_source_path, "a91d6e9eae71a0ed0ddeac3d571704fd3e47b3c5")
 
     # ERROR: tools/wrc/wrc -u -o dlls/gdi32/gdi32.res -m64 --nostdinc --po-dir=po -Idlls/gdi32 \
