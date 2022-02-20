@@ -700,7 +700,9 @@ def main():
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/40c9b46500c3606e966d5404d45b68a48609b6ea
     # FIXED: wine-4.3
     if wine_version >= Version("1.7.25") and wine_version < Version("4.3"):
-        patch_apply(wine_variant_source_path, "40c9b46500c3606e966d5404d45b68a48609b6ea")
+        # stable > 4.0.1 already has cherry-pick as 2a532f4809fc0328877c1f8219609c526daaba8b
+        if wine_version not in [Version("4.0.1"), Version("4.0.2"), Version("4.0.3"), Version("4.0.4")]:
+            patch_apply(wine_variant_source_path, "40c9b46500c3606e966d5404d45b68a48609b6ea")
 
     # loader/preloader build failure with GCC 10.x optimizing wld_memset() into a memset(3) call.
     # ERROR:  /usr/bin/ld: preloader.o: in function `wld_memset':
