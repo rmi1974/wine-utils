@@ -595,7 +595,9 @@ def main():
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/ca8a08606d3f0900b3f4aa8f2e6547882a22dba8
     # FIXED: wine-1.9.9
     if wine_version >= Version("1.7.44") and wine_version < Version("1.9.9"):
-        patch_apply(wine_variant_source_path, "ca8a08606d3f0900b3f4aa8f2e6547882a22dba8")
+        # stable > 1.8.2 already has cherry-pick as d133be20b15f0656430e48ff681fd6bab786528c
+        if wine_version not in [Version("1.8.3"), Version("1.8.4"), Version("1.8.5"), Version("1.8.6"), Version("1.8.7")]:
+           patch_apply(wine_variant_source_path, "ca8a08606d3f0900b3f4aa8f2e6547882a22dba8")
     # REBASE-FIX needed for ca8a08606d3f0900b3f for older Wine versions
     if wine_version < Version("1.7.44"):
         patch_apply(wine_variant_source_path, "4f862879c86aedef6d81982d4f828a3109b2192f")
