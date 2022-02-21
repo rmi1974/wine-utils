@@ -593,8 +593,8 @@ def main():
     #         server/fd.c:922: undefined reference to `major'
     #         collect2: error: ld returned 1 exit status
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/ca8a08606d3f0900b3f4aa8f2e6547882a22dba8
-    # FIXED: wine-1.9.10
-    if wine_version >= Version("1.7.44") and wine_version < Version("1.9.10"):
+    # FIXED: wine-1.9.9
+    if wine_version >= Version("1.7.44") and wine_version < Version("1.9.9"):
         patch_apply(wine_variant_source_path, "ca8a08606d3f0900b3f4aa8f2e6547882a22dba8")
     # REBASE-FIX needed for ca8a08606d3f0900b3f for older Wine versions
     if wine_version < Version("1.7.44"):
