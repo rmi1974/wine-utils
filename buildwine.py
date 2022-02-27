@@ -524,7 +524,9 @@ def main():
     # GIT: https://source.winehq.org/git/wine.git/commit/bf5ac531a030bce9e798ab66bc53e84a65ca8fdb
     # FIXED: wine-1.9.13
     if wine_version >= Version("1.7.46") and wine_version < Version("1.9.13"):
-        patch_apply(wine_variant_source_path, "bf5ac531a030bce9e798ab66bc53e84a65ca8fdb")
+        # stable > 1.8.3 already has cherry-pick as fad28964903e708e3236ebe72c11a6024d349db1
+        if wine_version not in [Version("1.8.4"), Version("1.8.5"), Version("1.8.6"), Version("1.8.7")]:
+            patch_apply(wine_variant_source_path, "bf5ac531a030bce9e798ab66bc53e84a65ca8fdb")
 
     # ERROR: include/winsock.h:401: warning: "INVALID_SOCKET" redefined
     # GIT: https://source.winehq.org/git/wine.git/commit/28173f06932edd85a64a952120d29b9bb1e762ea
