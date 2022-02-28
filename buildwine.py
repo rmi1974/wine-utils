@@ -475,18 +475,30 @@ def main():
     # GIT: https://source.winehq.org/git/wine.git/commit/8fcac3b2bb8ce4cdbcffc126df779bf1be168882
     # FIXED: wine-1.7.0
     if wine_version >= Version("1.3.28") and wine_version < Version("1.7.0"):
-        patch_apply(wine_variant_source_path, "3f98185fb8f88c181877e909ab1b6422fb9bca1e")
-        patch_apply(wine_variant_source_path, "8fcac3b2bb8ce4cdbcffc126df779bf1be168882")
-        patch_apply(wine_variant_source_path, "bda5a2ffb833b2824325bd9361b30dbaf5f78068")
+        # stable >= 1.6.1 already has cherry-pick as 572f97b1add2731ed6f14e2eea1ed5db2b1071dd
+        if wine_version not in [Version("1.6.1"), Version("1.6.2")]:
+            patch_apply(wine_variant_source_path, "3f98185fb8f88c181877e909ab1b6422fb9bca1e")
+        # stable >= 1.6.1 already has cherry-pick as 6ac684f25e12e3f490437dd101ad8150d43f43bf
+        if wine_version not in [Version("1.6.1"), Version("1.6.2")]:
+            patch_apply(wine_variant_source_path, "8fcac3b2bb8ce4cdbcffc126df779bf1be168882")
+        # stable >= 1.6.1 already has cherry-pick as db04cfc20d950d0e6e46f55d314b8f763b56e79a
+        if wine_version not in [Version("1.6.1"), Version("1.6.2")]:
+            patch_apply(wine_variant_source_path, "bda5a2ffb833b2824325bd9361b30dbaf5f78068")
     # jscript: https://source.winehq.org/git/wine.git/commitdiff/9ebdd111264cfa646dd5219b5874166eb59217c1
     if wine_version >= Version("1.1.10") and wine_version < Version("1.7.0"):
-        patch_apply(wine_variant_source_path, "ffbe1ca986bd299e1fc894440849914378adbf5c")
+        # stable >= 1.6.1 already has cherry-pick as 2516f6d5bfb6e9395bfa98ccad9bad6e17bd82fa
+        if wine_version not in [Version("1.6.1"), Version("1.6.2")]:
+            patch_apply(wine_variant_source_path, "ffbe1ca986bd299e1fc894440849914378adbf5c")
     # vbscript: https://source.winehq.org/git/wine.git/commitdiff/80bcaf8d7ba68aea7090cac2a18e4e7a13147e88
     if wine_version >= Version("1.3.28") and wine_version < Version("1.7.0"):
-        patch_apply(wine_variant_source_path, "f86c46f6403fe338a544ab134bdf563c5b0934ae")
+        # stable >= 1.6.1 already has cherry-pick as 8002ba95867c1f653635b23612c3136a7c899ab0
+        if wine_version not in [Version("1.6.1"), Version("1.6.2")]:
+            patch_apply(wine_variant_source_path, "f86c46f6403fe338a544ab134bdf563c5b0934ae")
     # wbemprox: https://source.winehq.org/git/wine.git/commitdiff/f6be21103b441180c8557aa6bc2845e5428271a4
     if wine_version >= Version("1.5.7") and wine_version < Version("1.7.0"):
-        patch_apply(wine_variant_source_path, "c14e322a92a24e704836c5c12207c694a30e805f")
+        # stable >= 1.6.1 already has cherry-pick as 98b1b7a89c175dee4f02e40b67f7435d765942c5
+        if wine_version not in [Version("1.6.1"), Version("1.6.2")]:
+            patch_apply(wine_variant_source_path, "c14e322a92a24e704836c5c12207c694a30e805f")
 
     # ERROR: err:msidb:get_tablecolumns column 1 out of range (gcc 4.9+ problem, breaks msi installers)
     # URL: https://bugs.winehq.org/show_bug.cgi?id=36139
