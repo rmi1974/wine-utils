@@ -577,7 +577,9 @@ def main():
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/bb50d6fd9512a9a05306c56112bbcdc6de6c8d65
     # FIXED: wine-1.7.2
     if wine_version >= Version("1.5.17") and wine_version < Version("1.7.2"):
-        patch_apply(wine_variant_source_path, "bb50d6fd9512a9a05306c56112bbcdc6de6c8d65")
+        # stable >= 1.6.1 already has cherry-pick as 4238c42c7c5168841b5703ed20f2a6cef403b181
+        if wine_version not in [Version("1.6.1"), Version("1.6.2")]:
+            patch_apply(wine_variant_source_path, "bb50d6fd9512a9a05306c56112bbcdc6de6c8d65")
 
     # ERROR: configure: libOSMesa 64-bit development files not found (or too old)
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/f625707ffc38c58cc296c8a27ac6c2b3e1c38249
