@@ -222,8 +222,7 @@ def main():
     ##################################################################
     # version/release handling part #1
     dash_version = ""
-    wine_version = parse_version(args.version)
-    if isinstance(wine_version, Version):
+    if args.version:
         # prepend dash to encode it into build/install folder names
         dash_version = "-{0}".format(args.version)
 
@@ -237,15 +236,18 @@ def main():
 
     ##################################################################
     # version/release handling part #2
-    if not args.version:
+    if args.version:
+        # check if version is exists
+        stdout = run_command_stdout("git describe --abbrev=0 wine-{0} 2> /dev/null | sed 's/wine-//'".format(args.version),
+                            "{0}/{1}-src".format(wine_workspace_path, args.variant))
+        wine_version = parse_version(stdout)
+        if not isinstance(wine_version, Version):
+            sys.exit("Unknown Wine version '{0}', aborting!".format(args.version))
+    else:
         # no version given but we need one to apply fixups on custom builds
         stdout = run_command_stdout("git describe --abbrev=0 2> /dev/null | sed 's/wine-//'",
                             wine_variant_source_path)
         wine_version = parse_version(stdout)
-
-    if not isinstance(wine_version, Version):
-        # unknown version schemes not supported
-        sys.exit("Invalid Wine version '{0}', aborting!".format(args.version))
 
     # for exporting variables into current shell environment
     my_env = dict(os.environ.copy())
