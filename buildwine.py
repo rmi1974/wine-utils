@@ -213,6 +213,9 @@ def main():
                            action="store_true",
                            help="do not reset Git source tree to version "
                                 "if specified (custom build with patches)")
+    my_parser.add_argument("--configure-only",
+                           action="store_true",
+                           help="do not build, run Wine 'configure' step only. ")
 
     args = my_parser.parse_args()
 
@@ -884,6 +887,10 @@ def main():
             run_command("{0}/configure --prefix={1} {2} {3} --with-wine64={4} 2>&1 | tee {5}".format(
                 wine_variant_source_path, wine_install_prefix, wine_cross_compile_options,
                 configure_options, wine_build_target_arch64_path, logfile), wine_build_target_arch32_path, my_env)
+
+    # don't attempt to build if "configure only" mode requested
+    if args.configure_only:
+        sys.exit(0)
 
     ##################################################################
     # build 64-bit Wine
