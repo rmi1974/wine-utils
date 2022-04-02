@@ -836,16 +836,6 @@ def main():
         patch_apply(wine_variant_source_path, "36a9f9dd05c3b9df77c44c91663e9bd6cae1c848")
 
     ##################################################################
-    # clean build directories if requested
-    if args.clean:
-
-        shutil.rmtree(wine_build_target_arch32_path, ignore_errors=True)
-        shutil.rmtree(wine_build_target_arch64_path, ignore_errors=True)
-
-    # always remove install directories
-    shutil.rmtree(wine_install_prefix, ignore_errors=True)
-
-    ##################################################################
     # run 'autoreconf' and 'tools/make_requests' if requested
     if args.force_autoconf:
 
@@ -855,7 +845,17 @@ def main():
         run_command("./tools/make_requests", wine_variant_source_path)
 
     ##################################################################
-    # build and install 64-bit Wine
+    # clean build directories if requested
+    if args.clean:
+
+        shutil.rmtree(wine_build_target_arch32_path, ignore_errors=True)
+        shutil.rmtree(wine_build_target_arch64_path, ignore_errors=True)
+
+    # always remove install directories when building
+    shutil.rmtree(wine_install_prefix, ignore_errors=True)
+
+    ##################################################################
+    # configure 64-bit Wine
     if wine_build_target_arch64_path:
 
         os.makedirs(wine_build_target_arch64_path, exist_ok=True)
@@ -871,16 +871,8 @@ def main():
                 wine_variant_source_path, wine_install_prefix, wine_cross_compile_options,
                 configure_options, logfile), wine_build_target_arch64_path, my_env)
 
-        run_command("make 2>&1 | tee -a {0}".format(logfile), wine_build_target_arch64_path, my_env)
-
-        run_command("make install | tee -a {0}".format(logfile), wine_build_target_arch64_path, my_env)
-
-        # Copy the PDB files into install DESTDIR.
-        run_command("find {0} -type f -name '*.pdb' -exec cp -v '{{}}' '{1}/{2}' \;".format(
-            wine_build_target_arch64_path, wine_install_prefix, wine_install_arch64_pe_dir))
-
     ##################################################################
-    # build and install 32-bit Wine
+    # configure 32-bit Wine
     if wine_build_target_arch32_path:
 
         os.makedirs( wine_build_target_arch32_path, exist_ok=True)
@@ -896,7 +888,31 @@ def main():
                 wine_variant_source_path, wine_install_prefix, wine_cross_compile_options,
                 configure_options, wine_build_target_arch64_path, logfile), wine_build_target_arch32_path, my_env)
 
+    ##################################################################
+    # build 64-bit Wine
+    if wine_build_target_arch64_path:
+
+        run_command("make 2>&1 | tee -a {0}".format(logfile), wine_build_target_arch64_path, my_env)
+
+    ##################################################################
+    # build 32-bit Wine
+    if wine_build_target_arch32_path:
+
         run_command("make 2>&1 | tee -a {0}".format(logfile), wine_build_target_arch32_path, my_env)
+
+    ##################################################################
+    # install 64-bit Wine
+    if wine_build_target_arch64_path:
+
+        run_command("make install | tee -a {0}".format(logfile), wine_build_target_arch64_path, my_env)
+
+        # Copy the PDB files into install DESTDIR.
+        run_command("find {0} -type f -name '*.pdb' -exec cp -v '{{}}' '{1}/{2}' \;".format(
+            wine_build_target_arch64_path, wine_install_prefix, wine_install_arch64_pe_dir))
+
+    ##################################################################
+    # install 32-bit Wine
+    if wine_build_target_arch64_path:
 
         run_command("make install | tee -a {0}".format(logfile), wine_build_target_arch32_path, my_env)
 
