@@ -851,9 +851,6 @@ def main():
         shutil.rmtree(wine_build_target_arch32_path, ignore_errors=True)
         shutil.rmtree(wine_build_target_arch64_path, ignore_errors=True)
 
-    # always remove install directories when building
-    shutil.rmtree(wine_install_prefix, ignore_errors=True)
-
     ##################################################################
     # configure 64-bit Wine
     if wine_build_target_arch64_path:
@@ -899,6 +896,9 @@ def main():
     if wine_build_target_arch32_path:
 
         run_command("make 2>&1 | tee -a {0}".format(logfile), wine_build_target_arch32_path, my_env)
+
+    # always remove old install directories before install step
+    shutil.rmtree(wine_install_prefix, ignore_errors=True)
 
     ##################################################################
     # install 64-bit Wine
