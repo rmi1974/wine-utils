@@ -468,7 +468,7 @@ def main():
                 run_command("git reset --hard @{upstream}", wine_variant_source_path)
 
         # apply staging patches to the clone
-        run_command("{0}/patches/patchinstall.sh DESTDIR={1} --backend=git --force-autoconf --all".format(
+        run_command("{0}/staging/patchinstall.py DESTDIR={1} --backend=git --force-autoconf --all".format(
             wine_staging_patches_path, wine_variant_source_path))
 
     ##################################################################
