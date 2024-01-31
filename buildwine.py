@@ -916,7 +916,7 @@ def main():
         run_command("make install | tee -a {0}".format(logfile), wine_build_target_arch64_path, my_env)
 
         # Copy the PDB files into install DESTDIR.
-        run_command("find {0} -type f -name '*.pdb' -exec cp -v '{{}}' '{1}/{2}' \;".format(
+        run_command(r"find {0} -type f -name '*.pdb' -exec cp -v '{{}}' '{1}/{2}' \;".format(
             wine_build_target_arch64_path, wine_install_prefix, wine_install_arch64_pe_dir))
 
     ##################################################################
@@ -931,7 +931,7 @@ def main():
             os.symlink("lib", "{0}/lib32".format(wine_install_prefix))
 
         # Copy the PDB files into install DESTDIR.
-        run_command("find {0} -type f -name '*.pdb' -exec cp -v '{{}}' '{1}/{2}' \;".format(
+        run_command(r"find {0} -type f -name '*.pdb' -exec cp -v '{{}}' '{1}/{2}' \;".format(
             wine_build_target_arch32_path, wine_install_prefix, wine_install_arch32_pe_dir))
 
     print(
