@@ -109,6 +109,58 @@ To better diagnose/debug build failures, pass `--jobs=1` to the script.
 
 See [How to show missing development packages when building Wine from source][1].
 
+### Multilib conflicts
+
+Even though modern Wine doesn't require multilib for WoW64 build anymore, sometimes it's still desired (building older Wine versions).
+In case of multilib conflicts (yes, this is still a case in 2024!!!), you may need to force install 32-bit devel packages over 64-bit devel ones.
+
+Example with Fedora 40, where *glib2-devel.i686* can't be installed alongside *glib2-devel-2.80.2-1.fc40.x86_64*.
+
+```shell
+sudo dnf install glib2-devel.i686
+Last metadata expiration check: 0:45:23 ago on Tue 14 May 2024 04:03:16 PM CEST.
+Dependencies resolved.
+=====================================================================================================================================================================================
+ Package                                      Architecture                          Version                                           Repository                                Size
+=====================================================================================================================================================================================
+Installing:
+ glib2-devel                                  i686                                  2.80.2-1.fc40                                     updates                                  1.5 M
+
+Transaction Summary
+=====================================================================================================================================================================================
+Install  1 Package
+
+Total download size: 1.5 M
+Installed size: 16 M
+Is this ok [y/N]: >
+Is this ok [y/N]: y
+Downloading Packages:
+glib2-devel-2.80.2-1.fc40.i686.rpm                                                                                                                   3.5 MB/s | 1.5 MB     00:00    
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Total                                                                                                                                                1.2 MB/s | 1.5 MB     00:01     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+The downloaded packages were saved in cache until the next successful transaction.
+You can remove cached packages by executing 'dnf clean packages'.
+Error: Transaction test error:
+  file /usr/share/gir-1.0/GLib-2.0.gir from install of glib2-devel-2.80.2-1.fc40.i686 conflicts with file from package glib2-devel-2.80.2-1.fc40.x86_64
+```
+
+[RedHat Bug Report](https://bugzilla.redhat.com/show_bug.cgi?id=2279197)
+
+Ugly workaround: Skip `dnf` but use `rpm` force install to install the downloaded package manually:
+
+[Fedora page for the offending package](https://fedora.pkgs.org/40/fedora-updates-x86_64/glib2-devel-2.80.2-1.fc40.i686.rpm.html)
+
+```shell
+sudo rpm -Uvh --force glib2-devel-2.80.2-1.fc40.i686.rpm 
+Verifying...                          ################################# [100%]
+Preparing...                          ################################# [100%]
+Updating / installing...
+   1:glib2-devel-2.80.2-1.fc40        ################################# [100%]
+```
+
 ### Cross-compiling using LLVM MinGw toolchain
 
 See project home page [LLVM/Clang/LLD based mingw-w64 toolchain][2] for overview.
