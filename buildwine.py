@@ -859,6 +859,23 @@ def main():
     if wine_version == Version("1.7.45"):
         patch_apply(wine_variant_source_path, "36a9f9dd05c3b9df77c44c91663e9bd6cae1c848")
 
+    # ERROR: In file included from dlls/wldap32/add.c:33:
+    #              dlls/wldap32/winldap_private.h:306:13: error:
+    #        conflicting types for ‘ldap_connect’; have ‘ULONG(WLDAP32_LDAP *, LDAP_TIMEVAL *)’ {aka ‘unsigned int(struct ldap *, struct l_timeval *)’}
+    #        306 | ULONG CDECL ldap_connect(WLDAP32_LDAP*,LDAP_TIMEVAL*);
+    #            |             ^~~~~~~~~~~~
+    #        In file included from dlls/wldap32/add.c:26:
+    #        /usr/include/ldap.h:1555:1: note: previous declaration of ‘ldap_connect’ with type ‘int(LDAP *)’ {aka ‘int(struct ldap *)’}
+    #        1555 | ldap_connect( LDAP *ld );
+    #             | ^~~~~~~~~~~~
+    # URL: https://bugs.winehq.org/show_bug.cgi?id=51129
+    # GIT: https://gitlab.winehq.org/wine/wine/-/commit/8db46756ca91695c7242e05d24a3e5ec4340c10c
+    # FIXED: wine-6.7
+    if wine_version < Version("6.7"):
+        # Can't use commit, it's too invasive and https://bugs.winehq.org/attachment.cgi?id=70064 isn't in git tree
+        #     patch_apply(wine_variant_source_path, "8db46756ca91695c7242e05d24a3e5ec4340c10c")
+        configure_options += " --without-ldap"
+
     ##################################################################
     # run 'autoreconf' and 'tools/make_requests' if requested
     if args.force_autoconf:
