@@ -338,6 +338,25 @@ def main():
     if wine_version >= Version("6.21"):
         wine_cflags_common += " -gdwarf-4"
 
+    # Work around GCC 14.x more strict default checks (https://gcc.gnu.org/gcc-14/changes.html)
+    # (1) incompatible-pointer-types
+    #
+    # mainline-src/dlls/msxml3/domdoc.c: In function ‘doparse’:
+    # mainline-src/dlls/msxml3/domdoc.c:515:9: error: initialization of ‘void (*)(void *, const xmlError *)’ {
+    # aka ‘void (*)(void *, const struct _xmlError *)’} from incompatible pointer type ‘void (*)(void *, xmlError *)’ {
+    # aka ‘void (*)(void *, struct _xmlError *)’} [-Wincompatible-pointer-types]
+    # 515 |         sax_serror                      /* serror */
+    #  |         ^~~~~~~~~~
+    #
+    # (2) implicit-function-declaration]
+    #
+    # mainline-src/dlls/msxml3/main.c:239:9: error: implicit declaration of function ‘xmlThrDefTreeIndentString’;
+    #  did you mean ‘xmlTreeIndentString’? [-Wimplicit-function-declaration]
+    #239 |         xmlThrDefTreeIndentString("\t");
+    #  |         ^~~~~~~~~~~~~~~~~~~~~~~~~
+    #  |         xmlTreeIndentString
+    wine_cflags_common += " -fpermissive"
+
     # Set up target arch specific CFLAGS which are not cross-compile dependent
     wine_cflags_target_arch64 = ""
     wine_cflags_target_arch32 = ""
