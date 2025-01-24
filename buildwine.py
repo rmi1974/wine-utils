@@ -216,6 +216,9 @@ def main():
     my_parser.add_argument("--configure-only",
                            action="store_true",
                            help="do not build, run Wine 'configure' step only. ")
+    my_parser.add_argument("--enable-experimental-wow64",
+                           action="store_true",
+                           help="enable experimental WoW64 mode, requires Wine 9.0+ and cross-compiler")
 
     args = my_parser.parse_args()
 
@@ -251,6 +254,16 @@ def main():
 
     # for exporting variables into current shell environment
     my_env = dict(os.environ.copy())
+
+    ##################################################################
+    # experimental features have certain version requirements
+
+    # Refuse to enable experimental Wow64 mode on older Wine versions
+    if wine_version < Version("9.0") and args.enable_experimental_wow64:
+        sys.exit("Experimental Wow64 mode not supported with requested Wine version {0}, aborting!".format(wine_version))
+    # new WoW64 mode builds requires MinGW cross compiler
+    if args.enable_experimental_wow64 and args.disable_mingw:
+        sys.exit("Experimental Wow64 mode requires MinGW cross-compiler, aborting!")
 
     ##################################################################
     # default options passed to 'configure'
@@ -905,13 +918,20 @@ def main():
 
         if not args.no_configure:
 
-            run_command("{0}/configure --prefix={1} {2} {3} --enable-win64 2>&1 | tee {4}".format(
+            enable_arch_args=""
+            if args.enable_experimental_wow64:
+                enable_arch_args="--enable-archs=i386,x86_64"
+            else:
+                enable_arch_args="--enable-win64"
+
+            run_command("{0}/configure --prefix={1} {2} {3} {4} 2>&1 | tee {5}".format(
                 wine_variant_source_path, wine_install_prefix, wine_cross_compile_options,
-                configure_options, logfile), wine_build_target_arch64_path, my_env)
+                configure_options, enable_arch_args, logfile),
+                wine_build_target_arch64_path, my_env)
 
     ##################################################################
     # configure 32-bit Wine
-    if wine_build_target_arch32_path:
+    if wine_build_target_arch32_path and not args.enable_experimental_wow64:
 
         os.makedirs( wine_build_target_arch32_path, exist_ok=True)
 
@@ -924,7 +944,8 @@ def main():
 
             run_command("{0}/configure --prefix={1} {2} {3} --with-wine64={4} 2>&1 | tee {5}".format(
                 wine_variant_source_path, wine_install_prefix, wine_cross_compile_options,
-                configure_options, wine_build_target_arch64_path, logfile), wine_build_target_arch32_path, my_env)
+                configure_options, wine_build_target_arch64_path, logfile),
+                wine_build_target_arch32_path, my_env)
 
     # don't attempt to build if "configure only" mode requested
     if args.configure_only:
@@ -938,7 +959,7 @@ def main():
 
     ##################################################################
     # build 32-bit Wine
-    if wine_build_target_arch32_path:
+    if wine_build_target_arch32_path and not args.enable_experimental_wow64:
 
         run_command("make 2>&1 | tee -a {0}".format(logfile), wine_build_target_arch32_path, my_env)
 
@@ -952,12 +973,18 @@ def main():
         run_command("make install | tee -a {0}".format(logfile), wine_build_target_arch64_path, my_env)
 
         # Copy the PDB files into install DESTDIR.
-        run_command(r"find {0} -type f -name '*.pdb' -exec cp -v '{{}}' '{1}/{2}' \;".format(
-            wine_build_target_arch64_path, wine_install_prefix, wine_install_arch64_pe_dir))
+        if not args.enable_experimental_wow64:
+            run_command(r"find {0} -type f -name '*.pdb' -exec cp -v '{{}}' '{1}/{2}' \;".format(
+                wine_build_target_arch64_path, wine_install_prefix, wine_install_arch64_pe_dir))
+        else:
+            run_command(r"find {0} -type f -path '*/x86_64-windows/*.pdb' -exec cp -v '{{}}' '{1}/{2}' \;".format(
+                wine_build_target_arch64_path, wine_install_prefix, wine_install_arch64_pe_dir))
+            run_command(r"find {0} -type f -path '*/i386-windows/*.pdb' -exec cp -v '{{}}' '{1}/{2}' \;".format(
+                wine_build_target_arch64_path, wine_install_prefix, wine_install_arch32_pe_dir))
 
     ##################################################################
     # install 32-bit Wine
-    if wine_build_target_arch64_path:
+    if wine_build_target_arch64_path and not args.enable_experimental_wow64:
 
         run_command("make install | tee -a {0}".format(logfile), wine_build_target_arch32_path, my_env)
 
