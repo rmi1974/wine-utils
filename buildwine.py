@@ -14,7 +14,7 @@ import tempfile
 import stat
 
 # Wine project upstream repos
-WINE_MAINLINE_GIT_URI = "git://source.winehq.org/git/wine.git"
+WINE_MAINLINE_GIT_URI = "git@gitlab.winehq.org:wine/wine.git"
 WINE_STAGING_GIT_URI = "https://github.com/wine-staging/wine-staging.git"
 
 def parse_version(version):
