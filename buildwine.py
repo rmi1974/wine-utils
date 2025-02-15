@@ -406,8 +406,10 @@ def main():
     if not args.disable_mingw:
         # LLVM based MinGW toolchain settings (https://github.com/mstorsjo/llvm-mingw)
         # - enable ASLR support
-        # Currently not supported by Wine loader: https://bugs.winehq.org/show_bug.cgi?id=48417
-        my_env["CROSSLDFLAGS"] = " -Wl,--dynamicbase"
+        # Wine bug #48417: https://bugs.winehq.org/show_bug.cgi?id=48417
+        # finally fixed in: https://gitlab.winehq.org/wine/wine/-/commit/72baffdb6d7ce2d8c2bb0656b48e6b963faa4de3
+        if wine_version >= Version("6.2"):
+            my_env["CROSSLDFLAGS"] = " -Wl,--dynamicbase"
         # - generate debug symbols in PDB format
         # GIT: https://source.winehq.org/git/wine.git/commit/83d00d328f58f910a9b197e0a465b110cbdc727c
         if wine_version >= Version("5.9"):
