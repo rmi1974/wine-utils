@@ -258,6 +258,10 @@ def main():
             sys.exit("Unknown Wine version '{0}', aborting!".format(args.version))
     else:
         # no version given but we need one to apply fixups on custom builds
+        # also handle case when variant isn't checked out yet
+        if not os.path.exists(wine_variant_source_path):
+            run_command("git clone {0} {1}".format(wine_mainline_source_path, wine_variant_source_path))
+
         stdout = run_command_stdout("git describe --abbrev=0 2> /dev/null | sed 's/wine-//'",
                             wine_variant_source_path)
         wine_version = parse_version(stdout)
