@@ -146,6 +146,16 @@ fi
     os.chmod(config_wrapper, os.stat(config_wrapper).st_mode | stat.S_IEXEC)
     return config_wrapper
 
+# Helpers for managing env dict entries
+def env_initialize_or_append(env, key, value):
+    if key in env:
+        env[key] += value
+    else:
+        env[key] = value
+
+def env_initialize(env, key, value):
+    env[key] = value
+
 def main():
 
     # Common workspace root path to Wine artifact directories: sources, build, install etc.
@@ -334,7 +344,7 @@ def main():
             cc_opt_arch = run_command_stdout(r"$CC -Q --help=target | grep -m1 -oP '\bmarch=\s+\K\w+'")
 
             wine_cross_compile_options += " --with-float-abi={0}".format(cc_opt_floatabi)
-            my_env["EXTRA_TARGETFLAGS"] = "-march={0} -mfpu={1}".format(cc_opt_arch, cc_opt_fpu)
+            env_initialize_or_append(my_env, "EXTRA_TARGETFLAGS", " -march={0} -mfpu={1}".format(cc_opt_arch, cc_opt_fpu))
 
         elif "aarch64" in wine_target_arch:
             wine_target_arch32 = ""
@@ -346,7 +356,7 @@ def main():
 
     # Provide full path to cross pkg-config
     # Due to SDK environment script PATH injection, the cross-host pkg-config is found before
-    my_env["PKG_CONFIG"] = shutil.which("pkg-config")
+    env_initialize(my_env, "PKG_CONFIG", shutil.which("pkg-config"))
 
     # common CFLAGS
     wine_cflags_common = "-O2 -g"
@@ -385,9 +395,9 @@ def main():
         # gcc lacking '__builtin_ms_va_list' support on ARM64:  https://gcc.gnu.org/bugzilla/show_bug.cgi?id=87334
 
         # CLANGxxx environment variables might be set by cross-compile environments such as Yocto SDK
-        my_env["CXX"] = os.getenv('CLANGCXX', 'clang++')
-        my_env["CC"] =  os.getenv('CLANGCC', 'clang')
-        my_env["CPP"] = os.getenv('CLANGCPP', 'clang -E')
+        env_initialize(my_env, "CXX", os.getenv('CLANGCXX', 'clang++'))
+        env_initialize(my_env, "CC", os.getenv('CLANGCC', 'clang'))
+        env_initialize(my_env, "CPP", os.getenv('CLANGCPP', 'clang -E'))
 
     if "aarch64" in wine_target_arch64:
         # Wine bug #38719: https://bugs.winehq.org/show_bug.cgi?id=38719
@@ -409,18 +419,18 @@ def main():
         # Wine bug #48417: https://bugs.winehq.org/show_bug.cgi?id=48417
         # finally fixed in: https://gitlab.winehq.org/wine/wine/-/commit/72baffdb6d7ce2d8c2bb0656b48e6b963faa4de3
         if wine_version >= Version("6.2"):
-            my_env["CROSSLDFLAGS"] = " -Wl,--dynamicbase"
+            env_initialize_or_append(my_env, "CROSSLDFLAGS", " -Wl,--dynamicbase")
         # - generate debug symbols in PDB format
         # GIT: https://source.winehq.org/git/wine.git/commit/83d00d328f58f910a9b197e0a465b110cbdc727c
         if wine_version >= Version("5.9"):
             # Support split debug for cross compiled modules
-            my_env["CROSSDEBUG"] = "pdb"
+            env_initialize(my_env, "CROSSDEBUG", " pdb")
         else:
-            my_env["CROSSCFLAGS"] = "-g -gcodeview -O2"
+            env_initialize_or_append(my_env, "CROSSCFLAGS", " -g -gcodeview -O2")
             # Wine 6.21 added dwarf4 debug format support in dbghelp
             if wine_version >= Version("6.21"):
-                my_env["CROSSCFLAGS"] = "-gdwarf-4 -O2"
-            my_env["CROSSLDFLAGS"] = "-Wl,-pdb="
+                env_initialize_or_append(my_env, "CROSSCFLAGS", " -gdwarf-4 -O2")
+            env_initialize_or_append(my_env, "CROSSLDFLAGS", " -Wl,-pdb=")
         # Use clang MSVC mode to emit 'movl %edi,%edi' prologue
         # https://github.com/llvm/llvm-project/blob/main/llvm/lib/Target/X86/X86MCInstLower.cpp#L1386
         #
@@ -434,7 +444,7 @@ def main():
         # GIT: https://source.winehq.org/git/wine.git/commitdiff/4b362d016c57c14570efeb9c38dfcc5cf2c0910d
         # FIXED: Wine 6.0
         if wine_version >= Version("6.0"):
-            my_env["CROSSCC"] = "clang"
+            env_initialize(my_env, "CROSSCC", "clang")
 
     # target arch specific build and install paths
     wine_build_target_arch32_path = ""
@@ -841,16 +851,16 @@ def main():
     # FIXED: wine-6.6
     if wine_version <= Version("6.5"):
         # needed for erroneous FREETYPE_CFLAGS
-        my_env["PKG_CONFIG"] = create_config_wrapper(my_env["PKG_CONFIG"], "--cflags freetype2", "-pthread")
+        env_initialize_or_append(my_env, "PKG_CONFIG", create_config_wrapper(my_env["PKG_CONFIG"], "--cflags freetype2", "-pthread"))
         # needed for erroneous FONTCONFIG_CFLAGS
         # NOTE: The second wrapper will call the first wrapper which in turn will call the original pkg-config
-        my_env["PKG_CONFIG"] = create_config_wrapper(my_env["PKG_CONFIG"], "--cflags fontconfig", "-pthread")
+        env_initialize_or_append(my_env, "PKG_CONFIG", create_config_wrapper(my_env["PKG_CONFIG"], "--cflags fontconfig", "-pthread"))
         # needed for erroneous FREETYPEINCL
         if wine_version < Version("1.5.2"):
             # original config tool is provided with full path so wrapper doesn't create a recursion
             wrapper_path = os.path.dirname( create_config_wrapper(shutil.which("freetype-config"), "--cflags", "-pthread"))
             # inject wrapper into PATH
-            my_env["PATH"] = "{0}:{1}".format(wrapper_path, my_env["PATH"])
+            env_initialize(my_env, "PATH", "{0}:{1}".format(wrapper_path, my_env["PATH"]))
 
     # ERROR: winebuild: llvm-mingw-20211002-ucrt-ubuntu-18.04-x86_64/bin/x86_64-w64-mingw32-dlltool failed with status 1
     #        make: *** [Makefile:1843: dlls/advpack/libadvpack.delay.a] Error 1
@@ -916,8 +926,8 @@ def main():
 
         os.makedirs(wine_build_target_arch64_path, exist_ok=True)
 
-        my_env["CFLAGS"] = "{0} {1}".format(wine_cflags_common, wine_cflags_target_arch64)
-        my_env["MAKEFLAGS"] = "-j{0} -l{0}".format(args.jobs)
+        env_initialize_or_append(my_env, "CFLAGS", " {0} {1}".format(wine_cflags_common, wine_cflags_target_arch64))
+        env_initialize_or_append(my_env, "MAKEFLAGS", " -j{0} -l{0}".format(args.jobs))
 
         logfile = "build_{0}.log".format(wine_target_arch64)
 
@@ -940,8 +950,8 @@ def main():
 
         os.makedirs( wine_build_target_arch32_path, exist_ok=True)
 
-        my_env["CFLAGS"] = "{0} {1}".format( wine_cflags_common, wine_cflags_target_arch32)
-        my_env["MAKEFLAGS"] = "-j{0} -l{0}".format(args.jobs)
+        env_initialize_or_append(my_env, "CFLAGS", " {0} {1}".format( wine_cflags_common, wine_cflags_target_arch32))
+        env_initialize_or_append(my_env, "MAKEFLAGS", " -j{0} -l{0}".format(args.jobs))
 
         logfile = "build_{0}.log".format( wine_target_arch32)
 
