@@ -290,9 +290,14 @@ def main():
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/f29d4a43e203303c2d4aaec388f281d01f17764c
     if wine_version <= Version("5.1"):
         args.disable_mingw = True
+    # Default to MSVC mode with LLVM cross-compilers.
+    # https://gitea.myhome.localdomain/wine-devel/wine/commit/12ec13e717d8453d01f28792f5b37882b79bd57b
+    if wine_version >= Version("10.7"):
+        configure_options += " --without-mingw" if args.disable_mingw else " --with-mingw=llvm-mingw"
     # MinGW cross-compiler option '--with-mingw' was added with Wine 4.6
     if wine_version >= Version("4.6"):
         configure_options += " --without-mingw" if args.disable_mingw else " --with-mingw"
+
     # - Wine-Mono disabled by default on HEAD builds (no explicit version given)
     configure_options += " --enable-mscoree" if args.enable_mscoree or args.version else " --disable-mscoree"
     # - Tests not built by default
