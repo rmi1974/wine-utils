@@ -266,6 +266,8 @@ def main():
                             wine_variant_source_path)
         wine_version = parse_version(stdout)
 
+    print("Building Wine {0}".format( wine_version))
+
     # for exporting variables into current shell environment
     my_env = dict(os.environ.copy())
 
@@ -295,7 +297,7 @@ def main():
     if wine_version >= Version("10.7"):
         configure_options += " --without-mingw" if args.disable_mingw else " --with-mingw=llvm-mingw"
     # MinGW cross-compiler option '--with-mingw' was added with Wine 4.6
-    if wine_version >= Version("4.6"):
+    elif wine_version >= Version("4.6"):
         configure_options += " --without-mingw" if args.disable_mingw else " --with-mingw"
 
     # - Wine-Mono disabled by default on HEAD builds (no explicit version given)
