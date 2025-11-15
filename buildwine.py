@@ -879,10 +879,10 @@ def main():
     # FIXED: wine-6.6
     if wine_version <= Version("6.5"):
         # needed for erroneous FREETYPE_CFLAGS
-        env_initialize_or_append(my_env, "PKG_CONFIG", create_config_wrapper(my_env["PKG_CONFIG"], "--cflags freetype2", "-pthread"))
+        env_initialize(my_env, "PKG_CONFIG", create_config_wrapper(my_env["PKG_CONFIG"], "--cflags freetype2", "-pthread"))
         # needed for erroneous FONTCONFIG_CFLAGS
         # NOTE: The second wrapper will call the first wrapper which in turn will call the original pkg-config
-        env_initialize_or_append(my_env, "PKG_CONFIG", create_config_wrapper(my_env["PKG_CONFIG"], "--cflags fontconfig", "-pthread"))
+        env_initialize(my_env, "PKG_CONFIG", create_config_wrapper(my_env["PKG_CONFIG"], "--cflags fontconfig", "-pthread"))
         # needed for erroneous FREETYPEINCL
         if wine_version < Version("1.5.2"):
             # original config tool is provided with full path so wrapper doesn't create a recursion
