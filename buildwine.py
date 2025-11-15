@@ -952,6 +952,18 @@ def main():
         if wine_version >= Version("7.21") and wine_version < Version("10.0-rc1"):
             patch_apply(wine_variant_source_path, "5f8673bc4f90aac1b52f47bcb79861f385915672", hunks="8")
 
+    # ERROR: libs/faudio/src/FACT.c:2300:21: error: call to undeclared library function 'alloca' with type 'void *(unsigned long long)';
+    #    ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+    #   2300 |                 mtxTmp = (float*) FAudio_alloca(
+    #        |                                   ^
+    #         libs/faudio/src/FAudio_internal.h:46:26: note: expanded from macro 'FAudio_alloca'
+    #     46 | #define FAudio_alloca(x) alloca(x)
+    #        |                          ^
+    # GIT: https://gitlab.winehq.org/wine/wine/-/commit/8f8b802e12d458fe97b4c0ddb11e2e5c353c354d
+    # FIXED: wine-7.8
+    if wine_version >= Version("6.20") and wine_version < Version("7.8"):
+        patch_apply(wine_variant_source_path, "8f8b802e12d458fe97b4c0ddb11e2e5c353c354d")
+
     ##################################################################
     # run 'autoreconf' and 'tools/make_requests' if requested
     if args.force_autoconf:
