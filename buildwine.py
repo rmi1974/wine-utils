@@ -70,19 +70,19 @@ def run_command_stdout(command, cwd=None, env=None):
     return subprocess.run("set -o pipefail && {0}".format(command), stdout=subprocess.PIPE,
                         cwd=cwd, env=env, shell=True, encoding="utf8").stdout.rstrip(os.linesep)
 
-def patch_apply(source_path, commit_id, exclude_pattern=""):
+def patch_apply(source_path, commit_id, exclude_pattern="", hunks=""):
     """ Apply a patch from Git commit into current branch using 'patch' tool.
         The heuristics/fuzziness produces much better results with old Wine versions
-        than any git merge strategy. Optionally exclude parts of the patch.
+        than any git merge strategy. Optionally exclude parts of the patch or select hunks.
 
     Parameters:
         source_path (str): Path to source repository.
         commit_id (str): Commit sha1 to generate patch from
         exclude_pattern (str): Pattern for 'filterdiff' to exclude files
+        hunks (str): Comma-separated hunk numbers to apply (optional)
 
     Returns:
         none.
-
     """
 
     # ensure required tools exist
@@ -98,9 +98,16 @@ def patch_apply(source_path, commit_id, exclude_pattern=""):
     if not patchfile or not os.path.exists(os.path.normpath(os.path.join(source_path, patchfile))):
         sys.exit("Patch extraction of '{0}' failed, aborting!".format(commit_id))
 
+    # build filterdiff command
+    filter_opts = "-p1"
+    if exclude_pattern:
+        filter_opts += " -x '{0}'".format(exclude_pattern)
+    if hunks:
+        filter_opts += " --hunks={0}".format(hunks)
+
     patch_stdout = run_command_stdout(
-        "filterdiff -p1 -x '{0}' < {1} | patch -p1 --forward --no-backup-if-mismatch 2>&1".format(
-            exclude_pattern, patchfile
+        "filterdiff {0} < {1} | patch -p1 --forward --no-backup-if-mismatch 2>&1".format(
+            filter_opts, patchfile
         ),
         source_path
     )
