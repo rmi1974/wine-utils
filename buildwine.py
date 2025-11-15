@@ -964,6 +964,18 @@ def main():
     if wine_version >= Version("6.20") and wine_version < Version("7.8"):
         patch_apply(wine_variant_source_path, "8f8b802e12d458fe97b4c0ddb11e2e5c353c354d")
 
+    # ERROR: libs/vkd3d/libs/vkd3d-shader/spirv.c:1083:13: error: incompatible function pointer types passing
+    #      'uint32_t (struct vkd3d_spirv_builder *, uint32_t, SpvDim, uint32_t, uint32_t, uint32_t, uint32_t, SpvImageFormat)'
+    #      (aka 'unsigned int (struct vkd3d_spirv_builder *, unsigned int, enum SpvDim_, unsigned int, unsigned int, unsigned int, unsigned int, enum SpvImageFormat_)')
+    #        to parameter of type 'vkd3d_spirv_build7_pfn'
+    #      (aka 'unsigned int (*)(struct vkd3d_spirv_builder *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int)') [-Wincompatible-function-pointer-types]
+    # 1083 |             vkd3d_spirv_build_op_type_image);
+    #      |             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # GIT: https://gitlab.winehq.org/wine/wine/-/commit/7ee17a15e0945d238848e767204010e5cacbf77c
+    # FIXED: 7.16
+    if wine_version >= Version("7.4") and wine_version < Version("7.16"):
+        patch_apply(wine_variant_source_path, "7ee17a15e0945d238848e767204010e5cacbf77c")
+
     ##################################################################
     # run 'autoreconf' and 'tools/make_requests' if requested
     if args.force_autoconf:
