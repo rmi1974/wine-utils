@@ -471,7 +471,7 @@ def main():
             env_initialize(my_env, "CROSSCC", "clang")
         # reproducible PE builds (related: https://bugs.winehq.org/show_bug.cgi?id=41342#c7)
         # LLVM option added in 9.0.0 (2018): https://releases.llvm.org/9.0.0/tools/lld/docs/ReleaseNotes.html
-        if wine_version >= Version("6.0"):
+        if wine_version >= Version("10.1"):
             env_initialize_or_append(my_env, "CROSSLDFLAGS", " -Wl,--no-insert-timestamp")
 
     # target arch specific build and install paths
