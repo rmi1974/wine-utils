@@ -20,8 +20,8 @@ import tempfile
 import stat
 
 # Wine project upstream repos
-WINE_MAINLINE_GIT_URI = "git@gitlab.winehq.org:wine/wine.git"
-WINE_STAGING_GIT_URI = "git@gitlab.winehq.org:wine/wine-staging.git"
+WINE_MAINLINE_GIT_URI = "https://gitlab.winehq.org/wine/wine.git"
+WINE_STAGING_GIT_URI = "https://gitlab.winehq.org/wine/wine-staging.git"
 
 def parse_version(version):
     """Use parse from packaging.version or LooseVersion from distutils.version"""
