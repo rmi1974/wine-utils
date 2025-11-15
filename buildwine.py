@@ -942,6 +942,16 @@ def main():
         #     patch_apply(wine_variant_source_path, "8db46756ca91695c7242e05d24a3e5ec4340c10c")
         configure_options += " --without-ldap"
 
+    # ERROR: dlls/win32u/sysparams.c: In function ‘init_yesno_entry’:
+    #         dlls/win32u/sysparams.c:2262:51: error: expected identifier before ‘bool’
+    # REGRESSION: https://gitlab.winehq.org/wine/wine/-/commit/d08808d8f3fefc3e558e9b3d349428719a5ada47
+    # GIT: https://gitlab.winehq.org/wine/wine/-/commit/5f8673bc4f90aac1b52f47bcb79861f385915672
+    # FIXED: wine-10.0-rc1
+    if wine_version >= Version("7.0-rc1") and wine_version < Version("10.0-rc1"):
+        patch_apply(wine_variant_source_path, "5f8673bc4f90aac1b52f47bcb79861f385915672", hunks="1-7")
+        if wine_version >= Version("7.21") and wine_version < Version("10.0-rc1"):
+            patch_apply(wine_variant_source_path, "5f8673bc4f90aac1b52f47bcb79861f385915672", hunks="8")
+
     ##################################################################
     # run 'autoreconf' and 'tools/make_requests' if requested
     if args.force_autoconf:
