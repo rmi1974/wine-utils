@@ -976,6 +976,17 @@ def main():
     if wine_version >= Version("7.4") and wine_version < Version("7.16"):
         patch_apply(wine_variant_source_path, "7ee17a15e0945d238848e767204010e5cacbf77c")
 
+    # ERROR: configure:16808: freetype2 cflags:
+    #        configure:16809: freetype2 libs: -L/usr/lib -lfreetype
+    #        configure:16812: checking for ft2build.h
+    #        configure:16812: gcc -m32 -c  -O2 -g -gdwarf-4 -fpermissive  -O2 -g -gdwarf-4 -fpermissive    conftest.c >&5
+    #        conftest.c:165:10: fatal error: ft2build.h: No such file or directory
+    # GIT: https://gitlab.winehq.org/wine/wine/-/commit/c7a97b5d5d56ef00a0061b75412c6e0e489fdc99
+    # For Wine > 7.21, adjust PKG_CONFIG_LIBDIR so pkg-config finds 32-bit .pc files
+    if wine_version > Version("7.21"):
+        dirs = "/usr/lib/pkgconfig:/usr/lib64/pkgconfig:/usr/share/pkgconfig"
+        env_initialize(my_env, "PKG_CONFIG_LIBDIR", f"{dirs}:{my_env.get('PKG_CONFIG_LIBDIR', '')}")
+
     ##################################################################
     # run 'autoreconf' and 'tools/make_requests' if requested
     if args.force_autoconf:
