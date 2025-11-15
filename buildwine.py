@@ -177,16 +177,6 @@ def main():
                                 os.path.realpath(__file__)), os.pardir))
 
     my_parser = argparse.ArgumentParser(description="Build Wine variants from Wine source tree", allow_abbrev=False)
-    # source path
-    my_parser.add_argument("--source-path",
-                           type=str,
-                           default="{0}/mainline-src".format(wine_workspace_path),
-                           help="specify the Wine source path (git checkout)")
-    # install prefix
-    my_parser.add_argument("--install-prefix",
-                           type=str,
-                           default="{0}/mainline-install".format(wine_workspace_path),
-                           help="specify the Wine install path")
     # default Wine variant: mainline
     my_parser.add_argument("--variant",
                            type=str,
@@ -478,7 +468,7 @@ def main():
     # target arch specific build and install paths
     wine_build_target_arch32_path = ""
     wine_build_target_arch64_path = ""
-    wine_install_prefix = args.install_prefix
+    wine_install_prefix = ""
 
     # target arch specific paths for 32-bit Wine
     if wine_target_arch32:
