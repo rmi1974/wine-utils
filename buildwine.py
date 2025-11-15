@@ -121,35 +121,42 @@ def bin_patch_apply(source_path, commit_id, exclude_pattern=""):
     # "Reversed (or previously applied) patch detected!  Skipping patch." is not an error
 
 def create_config_wrapper(org_config, arg_filter, output_remove):
-    """ Create a shell wrapper in /tmp for pkg-config, freetype-config etc. to fix broken cflags.
+    """Create a shell wrapper in /tmp for pkg-config, freetype-config etc. to fix broken cflags.
 
     Parameters:
-        org_config (str): Path to original pkg-config, freetype-config etc.
+        org_config (str): Path to original pkg-config or a previous wrapper.
         arg_filter (str): Argument pattern to filter output for.
-        output_replace (str): Output pattern to remove.
+        output_remove (str): Output pattern to remove.
 
     Returns:
         Full path to new config wrapper script.
-
     """
 
-    content = """#!/bin/bash
+    # Only enforce existence for the very first binary
+    if not os.path.isfile(org_config):
+        # If it's not a file yet, assume we're chaining wrappers
+        print(f"Wrapping (chained): {org_config}")
+
+    content = f"""#!/bin/bash
 result=`{org_config} "$@"`
 if [[ "$@" =~ "{arg_filter}" ]] ; then
   echo "${{result//{output_remove}/}}"
 else
   echo "$result"
 fi
-""".format( org_config=org_config, arg_filter=arg_filter, output_remove=output_remove)
+"""
 
     # Create the wrapper in /tmp/<random>/<org_config> to ensure uniqueness but same basename.
     # It also supports nested 'pkg-config' use-cases. Each created wrapper can call the previous wrapper
     # which at one point calls the original 'pkg-config' from first created wrapper (in sequence).
     # Each wrapper would filter out it's own pattern.
-    config_wrapper = os.path.join(tempfile.mkdtemp(), os.path.basename(org_config))
+    tmpdir = tempfile.mkdtemp(dir="/tmp")
+    config_wrapper = os.path.join(tmpdir, os.path.basename(org_config))
+
     with open(config_wrapper, 'w') as f:
-        f.write( content)
+        f.write(content)
     os.chmod(config_wrapper, os.stat(config_wrapper).st_mode | stat.S_IEXEC)
+
     return config_wrapper
 
 # Helpers for managing env dict entries
