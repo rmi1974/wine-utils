@@ -1,4 +1,5 @@
 # Docker image to build 32-bit and 64-bit Wine (shared WoW64)
+# SPDX-License-Identifier: MIT
 FROM fedora:42
 
 # --- Base development dependencies

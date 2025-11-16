@@ -8,6 +8,8 @@
 
 # Script to build Wine variants from source, including cross-compile for
 # non-Intel architectures. Run with '--help' for usage.
+# SPDX-License-Identifier: MIT
+# Author: rmi1974
 
 import argparse
 import os

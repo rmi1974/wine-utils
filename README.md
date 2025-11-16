@@ -202,3 +202,12 @@ Installs: mainline-install-*, staging-install-*, custom-install-*
 [1]: https://gist.github.com/rmi1974/f4393f5df3e34dc8cae35e2974fd9cda
 [2]: https://github.com/mstorsjo/llvm-mingw
 [3]: https://github.com/mstorsjo/llvm-mingw/releases
+
+---
+
+## License
+
+This project is licensed under the MIT License.
+See the [LICENSE](LICENSE) file for details.
+
+SPDX-License-Identifier: MIT
