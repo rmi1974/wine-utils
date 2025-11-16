@@ -997,6 +997,15 @@ def main():
     if wine_version >= Version("7.4") and wine_version < Version("7.16"):
         patch_apply(wine_variant_source_path, "7ee17a15e0945d238848e767204010e5cacbf77c")
 
+    # ERROR: tools/winegcc/winegcc -o dlls/davclnt/x86_64-windows/davclnt.dll --wine-objdir . -b x86_64-w64-mingw32 -Wl,--wine-builtin -shared \
+    #   ...
+    #   dlls/kernel32/x86_64-windows/libkernel32.a dlls/ntdll/x86_64-windows/libntdll.a -Wl,--dynamicbase --no-default-config
+    #   clang: error: no such file or directory: 'libgcc.a'
+    # GIT: https://gitlab.winehq.org/wine/wine/-/commit/0872e3c1ff242dc17f18749efb1e285c1155399b
+    # FIXED: wine-9.21
+    if wine_version >= Version("9.0") and wine_version < Version("9.21"):
+        patch_apply(wine_variant_source_path, "0872e3c1ff242dc17f18749efb1e285c1155399b")
+
     ##################################################################
     # run 'autoreconf' and 'tools/make_requests' if requested
     if args.force_autoconf:
