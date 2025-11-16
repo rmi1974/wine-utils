@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+
+# Wine build outputs
+mainline-src*/
+mainline-build*/
+mainline-install*/
+staging-src*/
+staging-build*/
+staging-install*/
+custom-src*/
+custom-build*/
+custom-install*/
+
+# Docker
+*.tar
+*.xz
+
+# Misc
+*.log
