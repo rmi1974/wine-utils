@@ -437,17 +437,17 @@ def main():
     # Work around GCC 14.x more strict default checks (https://gcc.gnu.org/gcc-14/changes.html)
     # (1) incompatible-pointer-types
     #
-    # mainline-src/dlls/msxml3/domdoc.c: In function ‘doparse’:
-    # mainline-src/dlls/msxml3/domdoc.c:515:9: error: initialization of ‘void (*)(void *, const xmlError *)’ {
-    # aka ‘void (*)(void *, const struct _xmlError *)’} from incompatible pointer type ‘void (*)(void *, xmlError *)’ {
-    # aka ‘void (*)(void *, struct _xmlError *)’} [-Wincompatible-pointer-types]
+    # mainline-src/dlls/msxml3/domdoc.c: In function 'doparse':
+    # mainline-src/dlls/msxml3/domdoc.c:515:9: error: initialization of 'void (*)(void *, const xmlError *)' {
+    # aka 'void (*)(void *, const struct _xmlError *)'} from incompatible pointer type 'void (*)(void *, xmlError *)' {
+    # aka 'void (*)(void *, struct _xmlError *)'} [-Wincompatible-pointer-types]
     # 515 |         sax_serror                      /* serror */
     #  |         ^~~~~~~~~~
     #
     # (2) implicit-function-declaration]
     #
-    # mainline-src/dlls/msxml3/main.c:239:9: error: implicit declaration of function ‘xmlThrDefTreeIndentString’;
-    #  did you mean ‘xmlTreeIndentString’? [-Wimplicit-function-declaration]
+    # mainline-src/dlls/msxml3/main.c:239:9: error: implicit declaration of function 'xmlThrDefTreeIndentString';
+    #  did you mean 'xmlTreeIndentString'? [-Wimplicit-function-declaration]
     #239 |         xmlThrDefTreeIndentString("\t");
     #  |         ^~~~~~~~~~~~~~~~~~~~~~~~~
     #  |         xmlTreeIndentString
@@ -596,7 +596,7 @@ def main():
     ##################################################################
     # apply Wine build fixups for older Wine versions
 
-    # ERROR: tools/wrc/parser.y:2840:15: error: ‘YYLEX’ undeclared (first use in this function)
+    # ERROR: tools/wrc/parser.y:2840:15: error: 'YYLEX' undeclared (first use in this function)
     #        and various other locations with problematic bison directives
     # URL: https://bugs.winehq.org/show_bug.cgi?id=34329
     # GIT: https://source.winehq.org/git/wine.git/commit/8fcac3b2bb8ce4cdbcffc126df779bf1be168882
@@ -636,9 +636,9 @@ def main():
     if wine_version >= Version("1.3.28") and wine_version < Version("1.7.20"):
         patch_apply(wine_variant_source_path, "deb274226783ab886bdb44876944e156757efe2b")
 
-    # ERROR: dlls/wineps.drv/psdrv.h:389:5: error: unknown type name ‘PSDRV_DEVMODEA’
-    # ERROR: dlls/wineps.drv/init.c:43:14: error: unknown type name ‘PSDRV_DEVMODE’
-    # ERROR: dlls/wineps.drv/init.c:605:16: error: ‘cupsGetPPD’ undeclared (first use in this function); did you mean ‘cupsGetFd’?
+    # ERROR: dlls/wineps.drv/psdrv.h:389:5: error: unknown type name 'PSDRV_DEVMODEA'
+    # ERROR: dlls/wineps.drv/init.c:43:14: error: unknown type name 'PSDRV_DEVMODE'
+    # ERROR: dlls/wineps.drv/init.c:605:16: error: 'cupsGetPPD' undeclared (first use in this function); did you mean 'cupsGetFd'?
     # GIT-start: https://source.winehq.org/git/wine.git/commit/d963a8f864a495f7230dc6fe717d71e61ae51d67
     # GIT-end: https://source.winehq.org/git/wine.git/commit/72cfc219f0ba2fc3aea19760558f7820f4883176
     # GIT: https://source.winehq.org/git/wine.git/commit/bdaddc4b7c4b4391b593a5f4ab91b8121c698bef
@@ -648,7 +648,7 @@ def main():
     if wine_version >= Version("1.5.2") and wine_version < Version("1.5.7"):
         patch_apply(wine_variant_source_path, "bdaddc4b7c4b4391b593a5f4ab91b8121c698bef")
 
-    # ERROR: dlls/winspool.drv/info.c:779:13: error: ‘cupsGetPPD’ undeclared here (not in a function); did you mean ‘cupsGetFd’?
+    # ERROR: dlls/winspool.drv/info.c:779:13: error: 'cupsGetPPD' undeclared here (not in a function); did you mean 'cupsGetFd'?
     # URL: https://bugs.winehq.org/show_bug.cgi?id=40851
     # GIT: https://source.winehq.org/git/wine.git/commit/10065d2acd0a9e1e852a8151c95569b99d1b3294
     # REBASE-FIX needed due to: https://source.winehq.org/git/wine.git/commitdiff/cf0e96c6d0edc3a22b8ee5ac423d9b6b652ce0e5
@@ -660,7 +660,7 @@ def main():
         if wine_version not in [Version("1.8.4"), Version("1.8.5"), Version("1.8.6"), Version("1.8.7")]:
             patch_apply(wine_variant_source_path, "10065d2acd0a9e1e852a8151c95569b99d1b3294")
 
-    # ERROR: dlls/secur32/schannel_gnutls.c:45:12: error: conflicting types for ‘gnutls_cipher_get_block_size’
+    # ERROR: dlls/secur32/schannel_gnutls.c:45:12: error: conflicting types for 'gnutls_cipher_get_block_size'
     # URL: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=832275
     # GIT: https://source.winehq.org/git/wine.git/commit/bf5ac531a030bce9e798ab66bc53e84a65ca8fdb
     # FIXED: wine-1.9.13
@@ -732,7 +732,7 @@ def main():
         patch_apply(wine_variant_source_path, "a35f9a13a80fa93c251e12402a73a38a89ec397f")
 
     # Fix build failure ('major' undefined) in glibc 2.28.
-    # ERROR: server/fd.c:922:9: warning: implicit declaration of function ‘major’ [-Wimplicit-function-declaration]
+    # ERROR: server/fd.c:922:9: warning: implicit declaration of function 'major' [-Wimplicit-function-declaration]
     #                  922 |     if (major(dev) == FLOPPY_MAJOR) return 1;
     #        /usr/bin/ld: fd.o: in function `is_device_removable':
     #         server/fd.c:922: undefined reference to `major'
@@ -748,11 +748,11 @@ def main():
         patch_apply(wine_variant_source_path, "4f862879c86aedef6d81982d4f828a3109b2192f")
 
     # Fix build failure for glibc 2.30+
-    # ERROR: dlls/ntdll/directory.c:145:19: error: conflicting types for ‘getdents64’
+    # ERROR: dlls/ntdll/directory.c:145:19: error: conflicting types for 'getdents64'
     #         145 | static inline int getdents64( int fd, char *de, unsigned int size )
     #        In file included from /usr/include/dirent.h:404,
     #             from dlls/ntdll/directory.c:29:
-    #        /usr/include/bits/dirent_ext.h:29:18: note: previous declaration of ‘getdents64’ was here
+    #        /usr/include/bits/dirent_ext.h:29:18: note: previous declaration of 'getdents64' was here
     #   29 | extern __ssize_t getdents64 (int __fd, void *__buffer, size_t __length)
     # make[1]: *** [Makefile:393: directory.o] Error 1
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/12fc123338f7af601d3fe76b168a644fcd7e1362
@@ -845,7 +845,7 @@ def main():
     # wpcap: Fix compilation with recent pcap/pcap.h versions.
     # ERROR: In file included from .../include/winsock2.h:50,
     #        from ... dlls/wpcap/wpcap.c:27:
-    #        .../include/ws2def.h:60:19: error: redefinition of ‘struct sockaddr_storage’
+    #        .../include/ws2def.h:60:19: error: redefinition of 'struct sockaddr_storage'
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/40c9b46500c3606e966d5404d45b68a48609b6ea
     # FIXED: wine-4.3
     if wine_version >= Version("1.7.25") and wine_version < Version("4.3"):
@@ -873,7 +873,7 @@ def main():
         patch_apply(wine_variant_source_path, "72999eac5b315102d3d7d48aaf6d687ca8ec8d96")
 
     # libxml2 fixes
-    #  ../dlls/msxml3/mxwriter.c:412:60: error: invalid use of incomplete typedef â€˜xmlBufâ€™ {aka â€˜struct _xmlBufâ€™}
+    #  ../dlls/msxml3/mxwriter.c:412:60: error: invalid use of incomplete typedef aEUR~xmlBufaEUR(TM) {aka aEUR~struct _xmlBufaEUR(TM)}
     #    412 |                                          This->buffer->conv->use/sizeof(WCHAR));
     #    make[1]: *** [Makefile:215: mxwriter.o] Error 1
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/a4b24978e9dc2e54057552fc2efffbd58cc25d0a
@@ -950,11 +950,11 @@ def main():
 
     # ERROR: In file included from dlls/wldap32/add.c:33:
     #              dlls/wldap32/winldap_private.h:306:13: error:
-    #        conflicting types for ‘ldap_connect’; have ‘ULONG(WLDAP32_LDAP *, LDAP_TIMEVAL *)’ {aka ‘unsigned int(struct ldap *, struct l_timeval *)’}
+    #        conflicting types for 'ldap_connect'; have 'ULONG(WLDAP32_LDAP *, LDAP_TIMEVAL *)' {aka 'unsigned int(struct ldap *, struct l_timeval *)'}
     #        306 | ULONG CDECL ldap_connect(WLDAP32_LDAP*,LDAP_TIMEVAL*);
     #            |             ^~~~~~~~~~~~
     #        In file included from dlls/wldap32/add.c:26:
-    #        /usr/include/ldap.h:1555:1: note: previous declaration of ‘ldap_connect’ with type ‘int(LDAP *)’ {aka ‘int(struct ldap *)’}
+    #        /usr/include/ldap.h:1555:1: note: previous declaration of 'ldap_connect' with type 'int(LDAP *)' {aka 'int(struct ldap *)'}
     #        1555 | ldap_connect( LDAP *ld );
     #             | ^~~~~~~~~~~~
     # URL: https://bugs.winehq.org/show_bug.cgi?id=51129
@@ -965,8 +965,8 @@ def main():
         #     patch_apply(wine_variant_source_path, "8db46756ca91695c7242e05d24a3e5ec4340c10c")
         configure_options += " --without-ldap"
 
-    # ERROR: dlls/win32u/sysparams.c: In function ‘init_yesno_entry’:
-    #         dlls/win32u/sysparams.c:2262:51: error: expected identifier before ‘bool’
+    # ERROR: dlls/win32u/sysparams.c: In function 'init_yesno_entry':
+    #         dlls/win32u/sysparams.c:2262:51: error: expected identifier before 'bool'
     # REGRESSION: https://gitlab.winehq.org/wine/wine/-/commit/d08808d8f3fefc3e558e9b3d349428719a5ada47
     # GIT: https://gitlab.winehq.org/wine/wine/-/commit/5f8673bc4f90aac1b52f47bcb79861f385915672
     # FIXED: wine-10.0-rc1
