@@ -178,6 +178,45 @@ fi
 
     return config_wrapper
 
+def setup_pkg_config_env(my_env, arch, wine_version):
+    """
+    Configure PKG_CONFIG environment for Wine builds and optionally generate fixup wrappers
+
+    Parameters:
+        my_env (dict): environment dictionary to mutate
+        arch (str): "x86_64" for 64-bit, "i386" for 32-bit
+        wine_version (str): wine version for fixups
+    """
+
+    if arch == "x86_64":
+        pkg_config_dirs = "/usr/lib64/pkgconfig:/usr/share/pkgconfig"
+        pkg_config_bin = "/usr/bin/x86_64-redhat-linux-gnu-pkg-config"
+    elif arch == "i386":
+        pkg_config_dirs = "/usr/lib/pkgconfig:/usr/share/pkgconfig"
+        # use plain pkg-config for 32-bit, or i686-specific if installed
+        pkg_config_bin = "/usr/bin/pkg-config"
+    else:
+        raise ValueError(f"Unsupported pkg-config arch: {arch}")
+
+    my_env["PKG_CONFIG_LIBDIR"] = pkg_config_dirs
+    my_env["PKG_CONFIG_PATH"] = ""
+    my_env["PKG_CONFIG"] = pkg_config_bin
+
+    # ERROR: tools/wrc/wrc -u -o dlls/gdi32/gdi32.res -m64 --nostdinc --po-dir=po -Idlls/gdi32 \
+    #        -I/usr/lib64/glib-2.0/include -I/usr/include/sysprof-4 -I/usr/include/libxml2 -D__WINESRC__ \
+    #        -pthread -D_GDI32_ -D_UCRT .../dlls/gdi32/gdi32.rc
+    #        tools/wrc/wrc: invalid option -- 'p'
+    #        tools/wrc/wrc: invalid option -- 't'
+    # URL: https://bugs.winehq.org/show_bug.cgi?id=50811
+    # GIT: https://source.winehq.org/git/wine.git/commitdiff/4f04994ef47b5077e13c1b770ed0f818f59adcd5
+    # FIXED: wine-6.6
+    if wine_version <= Version("6.5"):
+        # needed for erroneous FREETYPE_CFLAGS
+        env_initialize(my_env, "PKG_CONFIG", create_config_wrapper(my_env["PKG_CONFIG"], "--cflags freetype2", "-pthread"))
+        # needed for erroneous FONTCONFIG_CFLAGS
+        # NOTE: The second wrapper will call the first wrapper which in turn will call the original pkg-config
+        env_initialize(my_env, "PKG_CONFIG", create_config_wrapper(my_env["PKG_CONFIG"], "--cflags fontconfig", "-pthread"))
+
 # Helpers for managing env dict entries
 def env_initialize_or_append(env, key, value):
     if key in env:
@@ -386,10 +425,6 @@ def main():
             wine_install_arch64_so_dir = "/aarch64-unix"
         else:
             sys.exit("Unsupported target architecture '{0}', aborting!".format(wine_target_arch))
-
-    # Provide full path to cross pkg-config
-    # Due to SDK environment script PATH injection, the cross-host pkg-config is found before
-    env_initialize(my_env, "PKG_CONFIG", shutil.which("pkg-config"))
 
     # common CFLAGS
     wine_cflags_common = "-O2 -g"
@@ -879,26 +914,12 @@ def main():
     if wine_version >= Version("6.5") and wine_version < Version("6.18"):
         patch_apply(wine_variant_source_path, "a91d6e9eae71a0ed0ddeac3d571704fd3e47b3c5")
 
-    # ERROR: tools/wrc/wrc -u -o dlls/gdi32/gdi32.res -m64 --nostdinc --po-dir=po -Idlls/gdi32 \
-    #        -I/usr/lib64/glib-2.0/include -I/usr/include/sysprof-4 -I/usr/include/libxml2 -D__WINESRC__ \
-    #        -pthread -D_GDI32_ -D_UCRT .../dlls/gdi32/gdi32.rc
-    #        tools/wrc/wrc: invalid option -- 'p'
-    #        tools/wrc/wrc: invalid option -- 't'
-    # URL: https://bugs.winehq.org/show_bug.cgi?id=50811
-    # GIT: https://source.winehq.org/git/wine.git/commitdiff/4f04994ef47b5077e13c1b770ed0f818f59adcd5
-    # FIXED: wine-6.6
-    if wine_version <= Version("6.5"):
-        # needed for erroneous FREETYPE_CFLAGS
-        env_initialize(my_env, "PKG_CONFIG", create_config_wrapper(my_env["PKG_CONFIG"], "--cflags freetype2", "-pthread"))
-        # needed for erroneous FONTCONFIG_CFLAGS
-        # NOTE: The second wrapper will call the first wrapper which in turn will call the original pkg-config
-        env_initialize(my_env, "PKG_CONFIG", create_config_wrapper(my_env["PKG_CONFIG"], "--cflags fontconfig", "-pthread"))
-        # needed for erroneous FREETYPEINCL
-        if wine_version < Version("1.5.2"):
-            # original config tool is provided with full path so wrapper doesn't create a recursion
-            wrapper_path = os.path.dirname( create_config_wrapper(shutil.which("freetype-config"), "--cflags", "-pthread"))
-            # inject wrapper into PATH
-            env_initialize(my_env, "PATH", "{0}:{1}".format(wrapper_path, my_env["PATH"]))
+    # needed for erroneous FREETYPEINCL
+    if wine_version < Version("1.5.2"):
+        # original config tool is provided with full path so wrapper doesn't create a recursion
+        wrapper_path = os.path.dirname( create_config_wrapper(shutil.which("freetype-config"), "--cflags", "-pthread"))
+        # inject wrapper into PATH
+        env_initialize(my_env, "PATH", "{0}:{1}".format(wrapper_path, my_env["PATH"]))
 
     # ERROR: winebuild: llvm-mingw-20211002-ucrt-ubuntu-18.04-x86_64/bin/x86_64-w64-mingw32-dlltool failed with status 1
     #        make: *** [Makefile:1843: dlls/advpack/libadvpack.delay.a] Error 1
@@ -976,17 +997,6 @@ def main():
     if wine_version >= Version("7.4") and wine_version < Version("7.16"):
         patch_apply(wine_variant_source_path, "7ee17a15e0945d238848e767204010e5cacbf77c")
 
-    # ERROR: configure:16808: freetype2 cflags:
-    #        configure:16809: freetype2 libs: -L/usr/lib -lfreetype
-    #        configure:16812: checking for ft2build.h
-    #        configure:16812: gcc -m32 -c  -O2 -g -gdwarf-4 -fpermissive  -O2 -g -gdwarf-4 -fpermissive    conftest.c >&5
-    #        conftest.c:165:10: fatal error: ft2build.h: No such file or directory
-    # GIT: https://gitlab.winehq.org/wine/wine/-/commit/c7a97b5d5d56ef00a0061b75412c6e0e489fdc99
-    # For Wine > 7.21, adjust PKG_CONFIG_LIBDIR so pkg-config finds 32-bit .pc files
-    if wine_version > Version("7.21"):
-        dirs = "/usr/lib/pkgconfig:/usr/lib64/pkgconfig:/usr/share/pkgconfig"
-        env_initialize(my_env, "PKG_CONFIG_LIBDIR", f"{dirs}:{my_env.get('PKG_CONFIG_LIBDIR', '')}")
-
     ##################################################################
     # run 'autoreconf' and 'tools/make_requests' if requested
     if args.force_autoconf:
@@ -1022,6 +1032,8 @@ def main():
             else:
                 enable_arch_args="--enable-win64"
 
+            setup_pkg_config_env(my_env, "x86_64", wine_version)
+
             run_command("{0}/configure --prefix={1} {2} {3} {4} 2>&1 | tee {5}".format(
                 wine_variant_source_path, wine_install_prefix, wine_cross_compile_options,
                 configure_options, enable_arch_args, logfile),
@@ -1039,6 +1051,8 @@ def main():
         logfile = "build_{0}.log".format( wine_target_arch32)
 
         if not args.no_configure:
+
+            setup_pkg_config_env(my_env, "i386", wine_version)
 
             run_command("{0}/configure --prefix={1} {2} {3} --with-wine64={4} 2>&1 | tee {5}".format(
                 wine_variant_source_path, wine_install_prefix, wine_cross_compile_options,
