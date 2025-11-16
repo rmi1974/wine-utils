@@ -1,221 +1,194 @@
-# Wine support tools
+# Wine Build Tools
 
-## buildwine
+This project provides a modern, containerized environment for building and running a wide range of Wine releases in a **Fedora 42-based Docker environment**.
+Unlike many other Wine build projects, this one focuses on rebuilding as many old Wine releases as possible using the same reproducible setup.
+It avoids out-of-tree patches and instead applies existing commits to fix or work around build issues with legacy Wine releases.
 
-`buildwine.py` is a script to build Wine variants from source. It supports cross-compiler setups for
-non-Intel architectures. Run with '--help' for usage.
+All builds and runs are performed inside a Docker container.
 
-By default, `buildwine` always builds shared WoW64 Wine (32-bit and 64-bit), except when cross-compiling (non-Intel).
-Note the following defaults:
+---
 
-* building of tests is disabled, enable it by passing `--enable-tests` to the script
-* integration of Wine-Mono is disabled when building from HEAD (no explicit `--version`), enable it by passing `--enable-mscoree` to the script
+## Quickstart (TL;DR)
 
-The script maintains a specific top-level directory structure to separate sources and build artifacts for various variants and host/target architectures.
+```bash
+# source env script to use helpers
+source ./wine_docker.env
 
-Sources:
+# build the docker image
+wine_docker_image_build
 
-```console
-custom-install-x86_64
-custom-src
-...
-mainline-src
-mainline-src-1.3.28
-...
-staging-patches
-staging-patches-4.0
-staging-src
-staging-src-4.0
-...
-mainline-src-5.5
-mainline-src-reference-gitmirror
+# enter the docker container (for building/running Wine)
+wine_docker_run
+
+# register llvm-mingw toolchain (see later)
+export PATH="$PWD/llvm-mingw-20251104-ucrt-ubuntu-22.04-x86_64/bin:$PATH"
+
+# build a Wine release inside the container
+./buildwine.py --version=10.0 --clean
+
+# register Wine bindir path for particular build
+export PATH="$PWD/mainline-install-10.0-x86_64/bin:$PATH"
+
+# install/run Wine/app
+wineboot
 ```
 
-Build directories:
+## Docker setup using helper aliases
+### Source the environment helpers
 
-```console
-custom-build-i686
-custom-build-x86_64
-...
-mainline-build-1.3.28-i686
-mainline-build-1.3.28-x86_64
-...
-mainline-build-aarch64
-mainline-build-arm
-...
-mainline-build-i686
-mainline-build-x86_64
-...
-staging-build-4.0-i686
-staging-build-4.0-x86_64
-...
-staging-build-i686
-staging-build-x86_64
+The file `wine_docker.env` defines shell aliases for building and running the Docker environment.
+It must be **sourced**, not executed:
+
+```bash
+source ./wine_docker.env
 ```
 
-Install directories:
+This registers two aliases:
 
-```console
-custom-install-x86_64
-...
-mainline-install-1.3.28-x86_64
-...
-mainline-install-5.5-x86_64
-mainline-install-aarch64
-mainline-install-x86_64
-...
-staging-install-4.0-x86_64
-staging-install-x86_64
+`wine_docker_image_build` - builds the Docker image `wine-build-env` using your host user and group IDs
+`wine_docker_run` - creates a Docker container from `wine-build-env` image and runs it (home directory and the current working directory are mapped)
+
+### Build the Docker image
+
+```bash
+wine_docker_image_build
 ```
 
-Build Wine from current branch HEAD:
+This creates the `wine-build-env` Docker image and configures user mappings so files created inside the container are owned by your host user.
 
-```shell
+### Run the Docker container
+
+```bash
+wine_docker_run
+```
+
+This starts an interactive container session with:
+
+* DISPLAY forwarding via X11 for GUI apps
+* PulseAudio mounting for sound.
+* home directory and current directory mounted for seamless development.
+
+The alias internally runs `xhost +local:docker` to permit local X11 connections.
+
+## Building Wine inside the container
+
+It is recommended to use `buildwine.py` inside the Docker container.
+If you run `buildwine.py` without the provided Docker-based build environment, you are on your own.
+
+## Cross-compiling with LLVM MinGW
+
+This is the preferred build mode for this Wine builder project (supported since Wine 6.0).
+See project home page [LLVM/Clang/LLD based mingw-w64 toolchain][2] for overview.
+
+### Download and install
+
+Download and unpack `llvm-mingw` release from [LLVM/Clang/LLD mingw-w64 release downloads][3].
+
+```bash
+wget https://github.com/mstorsjo/llvm-mingw/releases/download/20251104/llvm-mingw-20251104-ucrt-ubuntu-22.04-x86_64.tar.xz
+
+tar axf llvm-mingw-20251104-ucrt-ubuntu-22.04-x86_64.tar.xz
+```
+
+### Register toolchain
+
+Inside the container, prepend the bin directory to `PATH`:
+
+```bash
+export PATH=$PWD/llvm-mingw-20251104-ucrt-ubuntu-22.04-x86_64/bin:$PATH
+```
+
+```bash
+clang -v
+
+clang version 21.1.5 (https://github.com/llvm/llvm-project.git 8e2cd28cd4ba46613a46467b0c91b1cabead26cd)
+Target: x86_64-unknown-linux-gnu
+Thread model: posix
+InstalledDir: /home/rmi1974/projects/wine/llvm-mingw-20251104-ucrt-ubuntu-22.04-x86_64/bin
+Found candidate GCC installation: /usr/lib/gcc/x86_64-redhat-linux/15
+Selected GCC installation: /usr/lib/gcc/x86_64-redhat-linux/15
+Candidate multilib: .;@m64
+Candidate multilib: 32;@m32
+Selected multilib: .;@m64
+```
+
+Now run `buildwine.py` as usual. The `llvm-mingw` toolchain will be automatically detected.
+
+## Common build commands
+
+Build Wine from the current branch HEAD:
+
+```bash
 ./buildwine.py
 ```
 
 Build a specific Wine release:
 
-```shell
-./buildwine.py --version=5.5
+```bash
+./buildwine.py --version=8.5
 ```
 
-Build Wine-Staging variant of a Wine release:
+Build Wine-Staging variant of a release:
 
-```shell
-./buildwine.py --variant=staging --version=4.0
+```bash
+./buildwine.py --variant=staging --version=9.15
 ```
 
-Build a custom variant, useful when doing Git bisect:
+Build a custom variant (e.g., for Git bisect):
 
-```shell
+```bash
 ./buildwine.py --variant=custom
 ```
 
-Build a range of Wine releases:
+## Behavior and useful buildwine.py flags
 
-```shell
-# build Wine 1.7.[51..53]
-for i in 1.7.{51..53} ; do ./buildwine.py --version=$i --clean || break ; done
+- shared WoW64 build by default: 32-bit + 64-bit builds are produced
+- tests are disabled by default: enable with `--enable-tests`
+- Wine-Mono is disabled on non-release builds (no exact Wine release tag on git checkout): enable with `--enable-mscoree`
+- debugging: to diagnose build failures deterministically, use `--jobs=1`
 
-# build Wine 1.7.[40..49]
-for i in `git -C mainline-src tag | sed -n 's/^wine-\(1.7.4[0-9]\)/\1/p' | \
-    sort -V` ; do ./buildwine.py --version=$i --clean || break ; done
+### Building ranges of Wine releases
+
+```bash
+# Build Wine 9.[0..22]
+for i in 9.{0..22}; do ./buildwine.py --version="$i" --clean || break; done
+
+# Build Wine 1.7.[40..49] using available source tags
+for i in $(git -C mainline-src tag | sed -n 's/^wine-\(1\.7\.4[0-9]\)/\1/p' | sort -V); do
+  ./buildwine.py --version="$i" --clean || break
+done
 ```
 
-To better diagnose/debug build failures, pass `--jobs=1` to the script.
+## Running Wine inside the container
 
-### Missing development packages
+After building, applications can be run from inside the same container.
+The build script will output the exact Wine install path for each build.
+Make note of it. You have to set it explicitly to use a particular Wine build.
 
-See [How to show missing development packages when building Wine from source][1].
-
-### Multilib conflicts
-
-Even though modern Wine doesn't require multilib for WoW64 build anymore, sometimes it's still desired (building older Wine versions).
-In case of multilib conflicts (yes, this is still a case in 2024!!!), you may need to force install 32-bit devel packages over 64-bit devel ones.
-
-Example with Fedora 40, where *glib2-devel.i686* can't be installed alongside *glib2-devel-2.80.2-1.fc40.x86_64*.
-
-```shell
-sudo dnf install glib2-devel.i686
-Last metadata expiration check: 0:45:23 ago on Tue 14 May 2024 04:03:16 PM CEST.
-Dependencies resolved.
-=====================================================================================================================================================================================
- Package                                      Architecture                          Version                                           Repository                                Size
-=====================================================================================================================================================================================
-Installing:
- glib2-devel                                  i686                                  2.80.2-1.fc40                                     updates                                  1.5 M
-
-Transaction Summary
-=====================================================================================================================================================================================
-Install  1 Package
-
-Total download size: 1.5 M
-Installed size: 16 M
-Is this ok [y/N]: >
-Is this ok [y/N]: y
-Downloading Packages:
-glib2-devel-2.80.2-1.fc40.i686.rpm                                                                                                                   3.5 MB/s | 1.5 MB     00:00    
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Total                                                                                                                                                1.2 MB/s | 1.5 MB     00:01     
-Running transaction check
-Transaction check succeeded.
-Running transaction test
-The downloaded packages were saved in cache until the next successful transaction.
-You can remove cached packages by executing 'dnf clean packages'.
-Error: Transaction test error:
-  file /usr/share/gir-1.0/GLib-2.0.gir from install of glib2-devel-2.80.2-1.fc40.i686 conflicts with file from package glib2-devel-2.80.2-1.fc40.x86_64
+```bash
+# Wine 10.0 mainline build
+export PATH=<basepath>/wine/mainline-install-10.0-x86_64/bin/:$PATH
 ```
 
-[RedHat Bug Report](https://bugzilla.redhat.com/show_bug.cgi?id=2279197)
+```bash
+# Example: run Wine's notepad
+wine notepad.exe
 
-Ugly workaround: Skip `dnf` but use `rpm` force install to install the downloaded package manually:
-
-[Fedora page for the offending package](https://fedora.pkgs.org/40/fedora-updates-x86_64/glib2-devel-2.80.2-1.fc40.i686.rpm.html)
-
-```shell
-sudo rpm -Uvh --force glib2-devel-2.80.2-1.fc40.i686.rpm 
-Verifying...                          ################################# [100%]
-Preparing...                          ################################# [100%]
-Updating / installing...
-   1:glib2-devel-2.80.2-1.fc40        ################################# [100%]
+# Run a Windows program from your mounted home directory
+wine ~/Downloads/SomeSetup.exe
 ```
 
-### Cross-compiling using LLVM MinGw toolchain
+If you are doing regression testing be careful with automatic downgrades and upgrades of existing WINEPREFIXes ("prefix recycling").
+It may work for a consecutive runs of different Wine releases but may get broken beyond repair.
+Restart with fresh `WINEPREFIX` in such cases. Reuse prefixes at own risk.
 
-See project home page [LLVM/Clang/LLD based mingw-w64 toolchain][2] for overview.
+## Directory layout
 
-Main benefits:
+The script maintains a separation of sources, build and install artifacts across variants and architectures:
 
-* Wine builtin modules cross-compiled to PE format (no ELF hybrids as with GCC)
-* symbol information generated in PDB format which can be used with many Windows debugging tools
-
-Tarballs are available from [LLVM/Clang/LLD mingw-w64 release downloads][3].
-
-Make sure it can be found in path by prepending the `bin` directory from the unpacked tarball to the `PATH` environment variable.
-
-### Cross-compiling using Poky SDK cross-toolchain
-
-For more information on how to create Poky SDK cross-toolchains see [meta-winedev: Yocto layer for Wine cross-development][4].
-
-Wine currently doesn't build with Yocto/Poky SDK cross-toolchains due to following bugs:
-
-* [Wine Bugzilla #46053][5]
-* [Wine Bugzilla #46079][6]
-
-Apply the patches.
-
-After that, `configure` needs to be updated. Since cross-compiling is done, a host-build for running wine tools must exist.
-
-```shell
-./buildwine.py --clean --force-autoconf
-```
-
-Install Poky SDK toolchain(s):
-
-```shell
-./build-$MACHINE/tmp/deploy/sdk/*-toolchain-*.sh -d sdk-install -y
-```
-
-Register the cross-toolchain in the shell environment.
-
-For 64-bit ARM:
-
-```shell
-source sdk-install/environment-setup-aarch64*
-```
-
-For 32-bit ARM:
-
-```shell
-source sdk-install/environment-setup-armv7*
-```
-
-Build Wine for target arch.
-
-```shell
-./buildwine.py --cross-compile-prefix=$CROSS_COMPILE --disable-mingw --clean --force-autoconf
-```
+Sources: mainline-src-*, staging-src-*, custom-src, plus git reference mirrors
+Builds: mainline-build-*, staging-build-*, custom-build-* for each arch and version
+Installs: mainline-install-*, staging-install-*, custom-install-*
 
 ---
 
@@ -224,14 +197,8 @@ Build Wine for target arch.
 * [How to show missing development packages when building Wine from source][1]
 * [LLVM/Clang/LLD based mingw-w64 toolchain][2]
 * [LLVM/Clang/LLD mingw-w64 release downloads][3]
-* [meta-winedev: Yocto layer for Wine cross-development][4]
-* [Wine Bugzilla #46053][5]
-* [Wine Bugzilla #46079][6]
 
 [//]: # (invisible, for link references)
 [1]: https://gist.github.com/rmi1974/f4393f5df3e34dc8cae35e2974fd9cda
 [2]: https://github.com/mstorsjo/llvm-mingw
 [3]: https://github.com/mstorsjo/llvm-mingw/releases
-[4]: https://github.com/rmi1974/meta-winedev
-[5]: https://bugs.winehq.org/show_bug.cgi?id=46053
-[6]: https://bugs.winehq.org/show_bug.cgi?id=46079
