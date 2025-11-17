@@ -72,28 +72,35 @@ def run_command_stdout(command, cwd=None, env=None):
     return subprocess.run("set -o pipefail && {0}".format(command), stdout=subprocess.PIPE,
                         cwd=cwd, env=env, shell=True, encoding="utf8").stdout.rstrip(os.linesep)
 
-def patch_apply(source_path, commit_id, exclude_pattern="", hunks=""):
+def patch_apply(source_path, commit_id_or_patchfile, exclude_pattern="", hunks=""):
     """ Apply a patch from Git commit into current branch using 'patch' tool.
         The heuristics/fuzziness produces much better results with old Wine versions
         than any git merge strategy. Optionally exclude parts of the patch or select hunks.
-
     Parameters:
         source_path (str): Path to source repository.
-        commit_id (str): Commit sha1 to generate patch from
-        exclude_pattern (str): Pattern for 'filterdiff' to exclude files
-        hunks (str): Comma-separated hunk numbers to apply (optional)
+        commit_id_or_patchfile (str): Either commit sha1 to generate patch from or file path to a patch.
+        exclude_pattern (str): Pattern for 'filterdiff' to exclude files.
+        hunks (str): Comma-separated hunk numbers to apply (optional).
 
     Returns:
         none.
     """
 
-    # extract the patch from Git checkout
-    patchfile = run_command_stdout(
-        "git format-patch -1 --full-index --binary {0} 2> /dev/null".format(commit_id),
-        source_path
-    )
-    if not patchfile or not os.path.exists(os.path.normpath(os.path.join(source_path, patchfile))):
-        sys.exit("Patch extraction of '{0}' failed, aborting!".format(commit_id))
+    # detect commit hash vs patch file path
+    is_commit = re.fullmatch(r"[0-9a-f]{7,40}", commit_id_or_patchfile) is not None
+    if is_commit:
+        # extract the patch from Git checkout
+        patchfile_rel = run_command_stdout(
+            "git format-patch -1 --full-index --binary {0} 2> /dev/null".format(commit_id_or_patchfile),
+            source_path
+        )
+        patchfile = os.path.join(source_path, patchfile_rel) if patchfile_rel else None
+        if not patchfile or not os.path.exists(os.path.normpath(patchfile)):
+            sys.exit("Patch extraction of '{0}' failed, aborting!".format(commit_id_or_patchfile))
+    else:
+        patchfile = os.path.normpath(commit_id_or_patchfile)
+        if not os.path.exists(patchfile):
+            sys.exit("Local patch file '{0}' not found, aborting!".format(patchfile))
 
     # build filterdiff command
     filter_opts = "-p1"
@@ -110,7 +117,7 @@ def patch_apply(source_path, commit_id, exclude_pattern="", hunks=""):
     )
     if any(re.findall(r'failed|error:', patch_stdout, re.IGNORECASE)):
         sys.exit("Patch '{0}' failed with output '{1}', aborting!".format(patchfile, patch_stdout))
-    # "Reversed (or previously applied) patch detected!  Skipping patch." is not an error
+    # "Reversed (or previously applied) patch detected! Skipping patch." is not an error
 
 def bin_patch_apply(source_path, commit_id, exclude_pattern=""):
     """ Apply a binary patch from Git commit into current branch using 'git apply'.
@@ -304,6 +311,10 @@ def main():
     wine_mainline_source_path = "{0}/mainline-src{1}".format(wine_workspace_path, dash_version)
     wine_variant_source_path = "{0}/{1}-src{2}".format(wine_workspace_path, args.variant, dash_version)
     wine_staging_patches_path = "{0}/staging-patches{1}".format(wine_workspace_path, dash_version)
+
+    # base path to patches
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    wine_patches_path = os.path.join(script_dir, "patches")
 
     ##################################################################
     # version/release handling part #2
