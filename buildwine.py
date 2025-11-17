@@ -780,19 +780,20 @@ def main():
     #   29 | extern __ssize_t getdents64 (int __fd, void *__buffer, size_t __length)
     # make[1]: *** [Makefile:393: directory.o] Error 1
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/12fc123338f7af601d3fe76b168a644fcd7e1362
-    # Smaller custom fix needed due to change buried in large rework commit.
+    # Smaller custom patch needed due to change buried in large rework commit.
     # FIXED: wine-1.9.10
-    # Intermediate fixup because d189f95d71f1246a doesn't apply cleanly on older Wine versions
+    # Intermediate fixup because custom patch doesn't apply cleanly on older Wine versions
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/606c88a348fa240359a25aa5a3659a0b41ee0cb4
     if wine_version >= Version("1.5.11"):
         if wine_version < Version("1.5.23"):
             patch_apply(wine_variant_source_path, "606c88a348fa240359a25aa5a3659a0b41ee0cb4")
-        # Intermediate fixup because d189f95d71f1246a doesn't apply cleanly on older Wine versions
+        # Intermediate fixup because custom patch doesn't apply cleanly on older Wine versions
         # GIT: https://source.winehq.org/git/wine.git/commitdiff/3ae113a957d396d400a88259634e2870368f307b
         if wine_version < Version("1.7.26"):
             patch_apply(wine_variant_source_path, "3ae113a957d396d400a88259634e2870368f307b")
         if wine_version < Version("1.9.10"):
-            patch_apply(wine_variant_source_path, "d189f95d71f1246a8683b14c5b64b0ec5308492f")
+            patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
+                "0001-ntdll-directory-getdents64-conflicts-with-newer-glibc-pre-wine-1.9.10.patch"))
     else:
         patch_apply(wine_variant_source_path, "cba95b7eb3986b201dfca5a3e6d9065edecb8188")
 
