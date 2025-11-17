@@ -1075,6 +1075,11 @@ def main():
                 configure_options, enable_arch_args, logfile),
                 wine_build_target_arch64_path, my_env)
 
+            # 32-bit part of WoW64 build: ERROR: checking for the directory containing the Wine tools...
+            #  configure: error: could not find Wine tools in mainline-build-1.9.1-x86_64
+            if wine_version < Version("1.9.2"):
+                run_command("make tools/winebuild 2>&1 | tee -a {0}".format(logfile), wine_build_target_arch64_path, my_env)
+
     ##################################################################
     # configure 32-bit Wine
     if wine_build_target_arch32_path and not args.enable_experimental_wow64:
