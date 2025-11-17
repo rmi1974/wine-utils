@@ -453,6 +453,19 @@ def main():
     #  |         xmlTreeIndentString
     wine_cflags_common += " -fpermissive"
 
+    # Work around GCC 15 treating 'bool' as reserved identifier in C23. Need to override default '-std=gnu23'
+    #
+    # mainline-src-5.17/dlls/user32/sysparams.c:422:34: error: two or more data types in declaration specifiers
+    #  422 |     struct sysparam_bool_entry   bool;
+    #      |                                  ^~~~
+    # mainline-src-5.17/dlls/user32/sysparams.c:422:38: warning: declaration does not declare anything
+    #  422 |     struct sysparam_bool_entry   bool;
+    #      |                                      ^
+    # mainline-src-5.17/dlls/user32/sysparams.c: In function 'get_bool_entry':
+    # mainline-src-5.17/dlls/user32/sysparams.c:958:65: error: expected identifier before 'bool'
+    #  958 |         if (load_entry( &entry->hdr, buf, sizeof(buf) )) entry->bool.val = atoiW( buf ) != 0;
+    wine_cflags_common += " -std=gnu17"
+
     # Set up target arch specific CFLAGS which are not cross-compile dependent
     wine_cflags_target_arch64 = ""
     wine_cflags_target_arch32 = ""
