@@ -87,11 +87,6 @@ def patch_apply(source_path, commit_id, exclude_pattern="", hunks=""):
         none.
     """
 
-    # ensure required tools exist
-    for tool in ("git", "filterdiff", "patch"):
-        if not shutil.which(tool):
-            sys.exit("Required tool '{0}' not found in PATH, aborting!".format(tool))
-
     # extract the patch from Git checkout
     patchfile = run_command_stdout(
         "git format-patch -1 --full-index --binary {0} 2> /dev/null".format(commit_id),
@@ -608,6 +603,11 @@ def main():
 
     ##################################################################
     # apply Wine build fixups for older Wine versions
+
+    # ensure required tools exist
+    for tool in ("git", "filterdiff", "patch"):
+        if not shutil.which(tool):
+            sys.exit("Required tool '{0}' not found in PATH, aborting!".format(tool))
 
     # ERROR: tools/wrc/parser.y:2840:15: error: 'YYLEX' undeclared (first use in this function)
     #        and various other locations with problematic bison directives
