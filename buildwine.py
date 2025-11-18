@@ -769,7 +769,8 @@ def main():
            patch_apply(wine_variant_source_path, "ca8a08606d3f0900b3f4aa8f2e6547882a22dba8")
     # REBASE-FIX needed for ca8a08606d3f0900b3f for older Wine versions
     if wine_version < Version("1.7.44"):
-        patch_apply(wine_variant_source_path, "4f862879c86aedef6d81982d4f828a3109b2192f")
+        patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
+            "0001-configure-Add-AC_HEADER_MAJOR-to-find-where-major-is-pre-wine-1.7.44.patch"))
 
     # Fix build failure for glibc 2.30+
     # ERROR: dlls/ntdll/directory.c:145:19: error: conflicting types for 'getdents64'

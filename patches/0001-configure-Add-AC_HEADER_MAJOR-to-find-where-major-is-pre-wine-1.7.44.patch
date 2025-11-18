@@ -1,0 +1,177 @@
+From 4f862879c86aedef6d81982d4f828a3109b2192f Mon Sep 17 00:00:00 2001
+From: Seong-ho Cho <darkcircle.0426@gmail.com>
+Date: Sun, 15 Nov 2020 23:50:07 +0100
+Subject: [PATCH] configure: Add AC_HEADER_MAJOR to find where major() is
+ defined.
+
+Signed-off-by: Seong-ho Cho <darkcircle.0426@gmail.com>
+Signed-off-by: Alexandre Julliard <julliard@winehq.org>
+---
+ configure              | 50 ++++++++++++++++++++++++++++++++++++++++++
+ configure.ac           |  1 +
+ dlls/ntdll/cdrom.c     |  5 +++++
+ dlls/ntdll/directory.c |  5 +++++
+ dlls/ntdll/file.c      |  5 +++++
+ include/config.h.in    |  8 +++++++
+ server/fd.c            |  5 +++++
+ 7 files changed, 79 insertions(+)
+
+diff --git a/configure b/configure
+index d77cc598994..75e18aa149e 100755
+--- a/configure
++++ b/configure
+@@ -6727,6 +6727,56 @@ fi
+ 
+ done
+ 
++{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether sys/types.h defines makedev" >&5
++$as_echo_n "checking whether sys/types.h defines makedev... " >&6; }
++if ${ac_cv_header_sys_types_h_makedev+:} false; then :
++  $as_echo_n "(cached) " >&6
++else
++  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
++/* end confdefs.h.  */
++#include <sys/types.h>
++int
++main ()
++{
++return makedev(0, 0);
++  ;
++  return 0;
++}
++_ACEOF
++if ac_fn_c_try_link "$LINENO"; then :
++  ac_cv_header_sys_types_h_makedev=yes
++else
++  ac_cv_header_sys_types_h_makedev=no
++fi
++rm -f core conftest.err conftest.$ac_objext \
++    conftest$ac_exeext conftest.$ac_ext
++
++fi
++{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_header_sys_types_h_makedev" >&5
++$as_echo "$ac_cv_header_sys_types_h_makedev" >&6; }
++
++if test $ac_cv_header_sys_types_h_makedev = no; then
++ac_fn_c_check_header_mongrel "$LINENO" "sys/mkdev.h" "ac_cv_header_sys_mkdev_h" "$ac_includes_default"
++if test "x$ac_cv_header_sys_mkdev_h" = xyes; then :
++
++$as_echo "#define MAJOR_IN_MKDEV 1" >>confdefs.h
++
++fi
++
++
++
++  if test $ac_cv_header_sys_mkdev_h = no; then
++    ac_fn_c_check_header_mongrel "$LINENO" "sys/sysmacros.h" "ac_cv_header_sys_sysmacros_h" "$ac_includes_default"
++if test "x$ac_cv_header_sys_sysmacros_h" = xyes; then :
++
++$as_echo "#define MAJOR_IN_SYSMACROS 1" >>confdefs.h
++
++fi
++
++
++  fi
++fi
++
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether stat file-mode macros are broken" >&5
+ $as_echo_n "checking whether stat file-mode macros are broken... " >&6; }
+ if ${ac_cv_header_stat_broken+:} false; then :
+diff --git a/configure.ac b/configure.ac
+index a9a7bcfecb7..6528489ac5f 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -515,6 +515,7 @@ AC_CHECK_HEADERS(\
+ 	valgrind/valgrind.h \
+ 	zlib.h
+ )
++AC_HEADER_MAJOR()
+ AC_HEADER_STAT()
+ 
+ dnl **** Checks for headers that depend on other ones ****
+diff --git a/dlls/ntdll/cdrom.c b/dlls/ntdll/cdrom.c
+index 25a3fde7706..e287218c1a9 100644
+--- a/dlls/ntdll/cdrom.c
++++ b/dlls/ntdll/cdrom.c
+@@ -38,6 +38,11 @@
+ #ifdef HAVE_SYS_STAT_H
+ # include <sys/stat.h>
+ #endif
++#ifdef MAJOR_IN_MKDEV
++# include <sys/mkdev.h>
++#elif defined(MAJOR_IN_SYSMACROS)
++# include <sys/sysmacros.h>
++#endif
+ #include <sys/types.h>
+ 
+ #ifdef HAVE_SYS_IOCTL_H
+diff --git a/dlls/ntdll/directory.c b/dlls/ntdll/directory.c
+index cbfc022be80..88f53880caa 100644
+--- a/dlls/ntdll/directory.c
++++ b/dlls/ntdll/directory.c
+@@ -47,6 +47,11 @@
+ #ifdef HAVE_SYS_ATTR_H
+ #include <sys/attr.h>
+ #endif
++#ifdef MAJOR_IN_MKDEV
++# include <sys/mkdev.h>
++#elif defined(MAJOR_IN_SYSMACROS)
++# include <sys/sysmacros.h>
++#endif
+ #ifdef HAVE_SYS_IOCTL_H
+ #include <sys/ioctl.h>
+ #endif
+diff --git a/dlls/ntdll/file.c b/dlls/ntdll/file.c
+index 43e52c6a0ae..df1a0b377af 100644
+--- a/dlls/ntdll/file.c
++++ b/dlls/ntdll/file.c
+@@ -57,6 +57,11 @@
+ #ifdef HAVE_SYS_SOCKET_H
+ #include <sys/socket.h>
+ #endif
++#ifdef MAJOR_IN_MKDEV
++# include <sys/mkdev.h>
++#elif defined(MAJOR_IN_SYSMACROS)
++# include <sys/sysmacros.h>
++#endif
+ #ifdef HAVE_UTIME_H
+ # include <utime.h>
+ #endif
+diff --git a/include/config.h.in b/include/config.h.in
+index 4d7c7acf859..7d7710a80c4 100644
+--- a/include/config.h.in
++++ b/include/config.h.in
+@@ -1296,6 +1296,14 @@
+ /* Define to 1 if you have the `__res_get_state' function. */
+ #undef HAVE___RES_GET_STATE
+ 
++/* Define to 1 if `major', `minor', and `makedev' are declared in <mkdev.h>.
++   */
++#undef MAJOR_IN_MKDEV
++
++/* Define to 1 if `major', `minor', and `makedev' are declared in
++   <sysmacros.h>. */
++#undef MAJOR_IN_SYSMACROS
++
+ /* Define to the address where bug reports for this package should be sent. */
+ #undef PACKAGE_BUGREPORT
+ 
+diff --git a/server/fd.c b/server/fd.c
+index 1253b3d2bdf..008b9829f89 100644
+--- a/server/fd.c
++++ b/server/fd.c
+@@ -86,6 +86,11 @@
+ #endif
+ #include <sys/stat.h>
+ #include <sys/time.h>
++#ifdef MAJOR_IN_MKDEV
++#include <sys/mkdev.h>
++#elif defined(MAJOR_IN_SYSMACROS)
++#include <sys/sysmacros.h>
++#endif
+ #include <sys/types.h>
+ #include <unistd.h>
+ #ifdef HAVE_SYS_SYSCALL_H
+-- 
+2.51.1
+
