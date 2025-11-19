@@ -1,0 +1,64 @@
+From cba95b7eb3986b201dfca5a3e6d9065edecb8188 Mon Sep 17 00:00:00 2001
+From: Robert Michelsen <robert.michelsen@gmx.net>
+Date: Mon, 16 Nov 2020 18:41:39 +0100
+Subject: [PATCH] ntdll: Fix getdents64 redefinition breakage with newer glibc.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+dlls/ntdll/directory.c:145:19: error: conflicting types for ‘getdents64’
+        145 | static inline int getdents64( int fd, char *de, unsigned int size )
+   In file included from /usr/include/dirent.h:404,
+            from dlls/ntdll/directory.c:29:
+         /usr/include/bits/dirent_ext.h:29:18: note: previous declaration of ‘getdents64’ was here
+     29 | extern __ssize_t getdents64 (int __fd, void *__buffer, size_t __length)
+   make[1]: *** [Makefile:393: directory.o] Error 1
+
+GIT: https://source.winehq.org/git/wine.git/commitdiff/12fc123338f7af601d3fe76b168a644fcd7e1362
+
+Smaller custom fix needed due to change buried in large rework commit.
+
+FIXED: wine-1.9.10
+---
+ dlls/ntdll/directory.c | 18 ------------------
+ 1 file changed, 18 deletions(-)
+
+diff --git a/dlls/ntdll/directory.c b/dlls/ntdll/directory.c
+index c8fff6b3b6c..6cb09ff89b8 100644
+--- a/dlls/ntdll/directory.c
++++ b/dlls/ntdll/directory.c
+@@ -89,7 +89,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
+ 
+ /* just in case... */
+ #undef VFAT_IOCTL_READDIR_BOTH
+-#undef USE_GETDENTS
+ 
+ #ifdef linux
+ 
+@@ -109,23 +108,6 @@ typedef struct
+ # define O_DIRECTORY 0200000 /* must be directory */
+ #endif
+ 
+-#ifdef SYS_getdents64
+-typedef struct
+-{
+-    ULONG64        d_ino;
+-    LONG64         d_off;
+-    unsigned short d_reclen;
+-    unsigned char  d_type;
+-    char           d_name[256];
+-} KERNEL_DIRENT64;
+-
+-static inline int getdents64( int fd, char *de, unsigned int size )
+-{
+-    return syscall( SYS_getdents64, fd, de, size );
+-}
+-#define USE_GETDENTS
+-#endif
+-
+ #endif  /* linux */
+ 
+ #define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
+-- 
+2.51.1
+

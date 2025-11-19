@@ -806,9 +806,9 @@ def main():
             patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
                 "0001-ntdll-directory-getdents64-conflicts-with-newer-glibc-pre-wine-1.9.10.patch"))
     else:
-        patch_apply(wine_variant_source_path, "cba95b7eb3986b201dfca5a3e6d9065edecb8188")
-
-
+        patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
+            "0001-ntdll-directory-getdents64-conflicts-with-newer-glibc-pre-wine-1.5.11.patch"))
+ 
     # Freetype 2.8.1 build failures
     # ERROR: ../tools/sfnt2fon/sfnt2fon -o coure.fon .../mainline-src-2.17/fonts/courier.ttf -d 128 13,1252,8
     #        Error: Cannot open face .../mainline-src-2.17/fonts/courier.ttf
