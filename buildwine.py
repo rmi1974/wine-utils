@@ -876,7 +876,8 @@ def main():
     # REBASE-FIX for 7ea82a02079d16 and 40166848a7944383a for older Wine versions
 
     if wine_version < Version("1.7.12"):
-        bin_patch_apply(wine_variant_source_path, "a326e29144b74c0b3a0261142892192b99607141")
+        bin_patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
+            "0001-fonts-Fix-freetype-2.8.1-build-failures-pre-wine-1.7.12.patch"))
 
     # wpcap: Fix compilation with recent pcap/pcap.h versions.
     # ERROR: In file included from .../include/winsock2.h:50,
