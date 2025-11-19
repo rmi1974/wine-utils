@@ -678,7 +678,8 @@ def main():
     # REBASE-FIX needed due to: https://source.winehq.org/git/wine.git/commitdiff/cf0e96c6d0edc3a22b8ee5ac423d9b6b652ce0e5
     # FIXED: wine-1.9.14
     if wine_version >= Version("1.3.28") and wine_version < Version("1.7.12"):
-        patch_apply(wine_variant_source_path, "2ac0c877f591be14815902b527f314a915eee147")
+        patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
+            "0001-winspool.drv-include-cups-ppd.h-to-fix-building-pre-wine-1.7.12.patch"))
     if wine_version >= Version("1.7.12") and wine_version < Version("1.9.14"):
         # stable > 1.8.3 already has cherry-pick as 17a826192ec458b1f090021db7f03e31fbfe7464
         if wine_version not in [Version("1.8.4"), Version("1.8.5"), Version("1.8.6"), Version("1.8.7")]:
