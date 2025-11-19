@@ -738,7 +738,8 @@ def main():
     # REBASE-FIX needed due to: https://source.winehq.org/git/wine.git/commitdiff/cf0e96c6d0edc3a22b8ee5ac423d9b6b652ce0e5
     # FIXED: wine-2.7
     if wine_version >= Version("1.6") and wine_version < Version("1.7.12"):
-        patch_apply(wine_variant_source_path, "324305bb282aa4d4de471c43d5c129d2bdd97711")
+        patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
+            "0001-configure-Support-for-recent-versions-of-OSMesa-pre-wine-1.7.12.patch"))
     if wine_version >= Version("1.7.12") and wine_version < Version("2.7"):
         # stable > 2.0.4 already has cherry-pick
         if wine_version not in [Version("2.0.5")]:

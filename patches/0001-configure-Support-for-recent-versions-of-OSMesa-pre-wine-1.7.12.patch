@@ -1,0 +1,83 @@
+From 324305bb282aa4d4de471c43d5c129d2bdd97711 Mon Sep 17 00:00:00 2001
+From: Sebastian Lackner <sebastian@fds-team.de>
+Date: Mon, 24 Apr 2017 01:20:15 +0200
+Subject: [PATCH] configure: Support for recent versions of OSMesa.
+
+Signed-off-by: Sebastian Lackner <sebastian@fds-team.de>
+Signed-off-by: Alexandre Julliard <julliard@winehq.org>
+(cherry picked from commit f625707ffc38c58cc296c8a27ac6c2b3e1c38249)
+---
+ configure                  |  4 ++--
+ configure.ac               |  2 +-
+ dlls/gdi32/dibdrv/opengl.c | 17 +++++++++--------
+ 3 files changed, 12 insertions(+), 11 deletions(-)
+
+diff --git a/configure b/configure
+index c2d0dd087e2..bf539c252fd 100755
+--- a/configure
++++ b/configure
+@@ -10321,11 +10321,11 @@ LIBS="-lOSMesa $X_LIBS $XLIB -lm $X_EXTRA_LIBS $LIBS"
+ #ifdef __cplusplus
+ extern "C"
+ #endif
+-char glAccum ();
++char OSMesaGetProcAddress ();
+ int
+ main ()
+ {
+-return glAccum ();
++return OSMesaGetProcAddress ();
+   ;
+   return 0;
+ }
+diff --git a/configure.ac b/configure.ac
+index 4f51909fade..4f8dc3d84e1 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1242,7 +1242,7 @@ This probably prevents linking to OpenGL. Try deleting the file and restarting c
+ 
+         if test "x$with_osmesa" != "xno"
+         then
+-            WINE_CHECK_SONAME(OSMesa,glAccum,,,[$X_LIBS $XLIB -lm $X_EXTRA_LIBS])
++            WINE_CHECK_SONAME(OSMesa,OSMesaGetProcAddress,,,[$X_LIBS -lm $X_EXTRA_LIBS])
+             WINE_NOTICE_WITH(osmesa,[test "x$ac_cv_lib_soname_OSMesa" = "x"],
+                              [libOSMesa ${notice_platform}development files not found (or too old), OpenGL rendering in bitmaps won't be supported.])
+         fi
+diff --git a/dlls/gdi32/dibdrv/opengl.c b/dlls/gdi32/dibdrv/opengl.c
+index 28a03f49c66..248a8f33cbb 100644
+--- a/dlls/gdi32/dibdrv/opengl.c
++++ b/dlls/gdi32/dibdrv/opengl.c
+@@ -113,14 +113,6 @@ static BOOL init_opengl(void)
+         return FALSE;
+     }
+ 
+-    for (i = 0; i < sizeof(opengl_func_names)/sizeof(opengl_func_names[0]); i++)
+-    {
+-        if (!(((void **)&opengl_funcs.gl)[i] = wine_dlsym( osmesa_handle, opengl_func_names[i], buffer, sizeof(buffer) )))
+-        {
+-            ERR( "%s not found in %s (%s), disabling.\n", opengl_func_names[i], SONAME_LIBOSMESA, buffer );
+-            goto failed;
+-        }
+-    }
+ #define LOAD_FUNCPTR(f) do if (!(p##f = wine_dlsym( osmesa_handle, #f, buffer, sizeof(buffer) ))) \
+     { \
+         ERR( "%s not found in %s (%s), disabling.\n", #f, SONAME_LIBOSMESA, buffer ); \
+@@ -134,6 +126,15 @@ static BOOL init_opengl(void)
+     LOAD_FUNCPTR(OSMesaPixelStore);
+ #undef LOAD_FUNCPTR
+ 
++    for (i = 0; i < sizeof(opengl_func_names)/sizeof(opengl_func_names[0]); i++)
++    {
++        if (!(((void **)&opengl_funcs.gl)[i] = pOSMesaGetProcAddress( opengl_func_names[i] )))
++        {
++            ERR( "%s not found in %s, disabling.\n", opengl_func_names[i], SONAME_LIBOSMESA );
++            goto failed;
++        }
++    }
++
+     return TRUE;
+ 
+ failed:
+-- 
+2.51.1
+
