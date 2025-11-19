@@ -1045,6 +1045,15 @@ def main():
     if wine_version >= Version("9.0") and wine_version < Version("9.21"):
         patch_apply(wine_variant_source_path, "0872e3c1ff242dc17f18749efb1e285c1155399b")
 
+    # ERROR: ../tools/makedep  -C/mainline-src-1.7.8/tools -Smainline-src-1.7.8 -T..  -I/usr/include/freetype2
+    #      -I/usr/include/libpng16 -DWITH_GZFILEOP -I/usr/include/harfbuzz -I/usr/include/glib-2.0
+    #      -I/usr/lib64/glib-2.0/include -I/usr/include/sysprof-6  fnt2fon.c make_ctests.c make_xftmpl.c makedep.c sfnt2fnt.c
+    #                winemaker.de.UTF-8.man.in winemaker.fr.UTF-8.man.in winemaker.man.in
+    # Unknown option '-DWITH_GZFILEOP'
+    if wine_version < Version("1.7.9"):
+        patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
+            "0001-tools-makedep-ignore-erroneous-d-argument-pre-wine-1.7.9.patch"))
+
     ##################################################################
     # run 'autoreconf' and 'tools/make_requests' if requested
     if args.force_autoconf:
