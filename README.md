@@ -2,9 +2,16 @@
 
 This project provides a modern, containerized environment for building and running a wide range of Wine releases in a **Fedora 42-based Docker environment**.
 Unlike many other Wine build projects, this one focuses on rebuilding as many old Wine releases as possible using the same reproducible setup.
-It avoids out-of-tree patches and instead applies existing commits to fix or work around build issues with legacy Wine releases.
+It mostly avoids out-of-tree patches and instead applies existing commits to fix or work around build issues with legacy Wine releases.
 
 All builds and runs are performed inside a Docker container.
+
+## Key points of this build setup
+
+* oldest Wine release supported: **Wine 1.3.34 (Dec 2, 2011)**
+* all builds are **shared WoW64 (32‑bit + 64‑bit)**
+* since **Wine 5.2**, **llvm‑mingw** cross‑toolchain is preferred (to produce PE binaries when supported)
+* since **Wine 10.0**, builds are **pure WoW64** (no 32‑bit multilib required anymore)
 
 ---
 
