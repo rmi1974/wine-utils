@@ -302,6 +302,9 @@ def main():
     my_parser.add_argument("--enable-experimental-wow64",
                            action="store_true",
                            help="enable experimental WoW64 mode, requires Wine 9.0+ and cross-compiler (auto-enabled on Wine >= 10.0)")
+    my_parser.add_argument("--disable-experimental-wow64",
+                           action="store_true",
+                           help="disable experimental WoW64 mode even if Wine >= 10.0")
 
     args = my_parser.parse_args()
 
@@ -357,8 +360,9 @@ def main():
     # new WoW64 mode builds requires MinGW cross compiler
     if args.enable_experimental_wow64 and args.disable_mingw:
         sys.exit("Experimental Wow64 mode requires MinGW cross-compiler, aborting!")
-    # auto-enabled experimental Wow64 mode on all Wine versions >= 10.0
-    if wine_version >= Version("10.0"):
+    # auto-enabled experimental Wow64 mode on all Wine versions >= 10.0,
+    # unless explicitly disabled
+    if wine_version >= Version("10.0") and not args.disable_experimental_wow64:
         args.enable_experimental_wow64 = True
 
     ##################################################################
