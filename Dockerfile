@@ -28,6 +28,19 @@ RUN dnf -y install \
     xorg-x11-xauth \
     && dnf clean all && rm -rf /var/cache/dnf
 
+# --- Fonts for Wine dialogs ---
+RUN dnf -y install \
+    dejavu-sans-fonts \
+    dejavu-serif-fonts \
+    liberation-fonts \
+    google-noto-sans-fonts \
+    xorg-x11-fonts-Type1 \
+    xorg-x11-fonts-misc \
+    && dnf clean all && rm -rf /var/cache/dnf
+
+# Rebuild font cache
+RUN fc-cache -fv
+
 # --- Build dependencies for Wine ---
 RUN dnf -y install \
     alsa-lib alsa-lib.i686 \
