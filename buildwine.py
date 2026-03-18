@@ -1083,7 +1083,7 @@ def main():
         env_initialize_or_append(my_env, "CFLAGS", " {0} {1}".format(wine_cflags_common, wine_cflags_target_arch64))
         env_initialize_or_append(my_env, "MAKEFLAGS", " -j{0} -l{0}".format(args.jobs))
 
-        logfile = "build_{0}.log".format(wine_target_arch64)
+        logfile64 = "build_{0}.log".format(wine_target_arch64)
 
         if not args.no_configure:
 
@@ -1097,13 +1097,13 @@ def main():
 
             run_command("{0}/configure --prefix={1} {2} {3} {4} 2>&1 | tee {5}".format(
                 wine_variant_source_path, wine_install_prefix, wine_cross_compile_options,
-                configure_options, enable_arch_args, logfile),
+                configure_options, enable_arch_args, logfile64),
                 wine_build_target_arch64_path, my_env)
 
             # 32-bit part of WoW64 build: ERROR: checking for the directory containing the Wine tools...
             #  configure: error: could not find Wine tools in mainline-build-1.9.1-x86_64
             if wine_version < Version("1.9.2"):
-                run_command("make tools/winebuild 2>&1 | tee -a {0}".format(logfile), wine_build_target_arch64_path, my_env)
+                run_command("make tools/winebuild 2>&1 | tee -a {0}".format(logfile64), wine_build_target_arch64_path, my_env)
 
     ##################################################################
     # configure 32-bit Wine
@@ -1114,7 +1114,7 @@ def main():
         env_initialize_or_append(my_env, "CFLAGS", " {0} {1}".format( wine_cflags_common, wine_cflags_target_arch32))
         env_initialize_or_append(my_env, "MAKEFLAGS", " -j{0} -l{0}".format(args.jobs))
 
-        logfile = "build_{0}.log".format( wine_target_arch32)
+        logfile32 = "build_{0}.log".format( wine_target_arch32)
 
         if not args.no_configure:
 
@@ -1122,7 +1122,7 @@ def main():
 
             run_command("{0}/configure --prefix={1} {2} {3} --with-wine64={4} 2>&1 | tee {5}".format(
                 wine_variant_source_path, wine_install_prefix, wine_cross_compile_options,
-                configure_options, wine_build_target_arch64_path, logfile),
+                configure_options, wine_build_target_arch64_path, logfile32),
                 wine_build_target_arch32_path, my_env)
 
     # don't attempt to build if "configure only" mode requested
@@ -1133,13 +1133,13 @@ def main():
     # build 64-bit Wine
     if wine_build_target_arch64_path:
 
-        run_command("make 2>&1 | tee -a {0}".format(logfile), wine_build_target_arch64_path, my_env)
+        run_command("make 2>&1 | tee -a {0}".format(logfile64), wine_build_target_arch64_path, my_env)
 
     ##################################################################
     # build 32-bit Wine
     if wine_build_target_arch32_path and not args.enable_experimental_wow64:
 
-        run_command("make 2>&1 | tee -a {0}".format(logfile), wine_build_target_arch32_path, my_env)
+        run_command("make 2>&1 | tee -a {0}".format(logfile32), wine_build_target_arch32_path, my_env)
 
     # always remove old install directories before install step
     shutil.rmtree(wine_install_prefix, ignore_errors=True)
@@ -1148,7 +1148,7 @@ def main():
     # install 64-bit Wine
     if wine_build_target_arch64_path:
 
-        run_command("make install | tee -a {0}".format(logfile), wine_build_target_arch64_path, my_env)
+        run_command("make install | tee -a {0}".format(logfile64), wine_build_target_arch64_path, my_env)
 
         # Copy the PDB files into install DESTDIR.
         if not args.enable_experimental_wow64:
@@ -1164,7 +1164,7 @@ def main():
     # install 32-bit Wine
     if wine_build_target_arch64_path and not args.enable_experimental_wow64:
 
-        run_command("make install | tee -a {0}".format(logfile), wine_build_target_arch32_path, my_env)
+        run_command("make install | tee -a {0}".format(logfile32), wine_build_target_arch32_path, my_env)
 
         # Make a lib32 symlink to lib to allow 'winegcc -m32'.
         # Since Wine 6.8, libraries are installed into architecture-specific subdirectories.
