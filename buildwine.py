@@ -874,8 +874,8 @@ def main():
     #       make[1]: *** [Makefile:338: msvcp90.dll.so] Error 2
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/72999eac5b315102d3d7d48aaf6d687ca8ec8d96
     #      https://source.winehq.org/git/wine.git/commitdiff/07a9909ccaea1e9626731c4b259f555877d50bb2
-    pa("07a9909ccaea1e9626731c4b259f555877d50bb2", max_ver="1.3.35")
-    pa("72999eac5b315102d3d7d48aaf6d687ca8ec8d96", max_ver="1.3.35")
+    pa("07a9909ccaea1e9626731c4b259f555877d50bb2", min_ver="1.3.34", max_ver="1.3.35")
+    pa("72999eac5b315102d3d7d48aaf6d687ca8ec8d96", min_ver="1.3.34", max_ver="1.3.35")
 
     # libxml2 fixes
     #  ../dlls/msxml3/mxwriter.c:412:60: error: invalid use of incomplete typedef aEUR~xmlBufaEUR(TM) {aka aEUR~struct _xmlBufaEUR(TM)}
@@ -887,7 +887,7 @@ def main():
     #      https://source.winehq.org/git/wine.git/commitdiff/d80ee5b3ae36275f813b096576b5beecea2c2d60
     #      https://source.winehq.org/git/wine.git/commitdiff/fda8c2177d01c767c020864370cf9dfaf7b6755d
     #      https://source.winehq.org/git/wine.git/commitdiff/35c7c694294d5461b84e18b17b65a99068050e8b
-    if wine_version < Version("1.3.35"):
+    if wine_version >= Version("1.3.30") and wine_version < Version("1.3.35"):
         pa("a4b24978e9dc2e54057552fc2efffbd58cc25d0a")
         pa("197d41156a1a237eb2073524ec36006d6a26ceaa")
         pa("b0f704daaf633d8c713c9212a2ab5dd8a4457e7a")
