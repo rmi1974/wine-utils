@@ -884,6 +884,25 @@ def main():
         if wine_version not in [Version("4.0.1"), Version("4.0.2"), Version("4.0.3"), Version("4.0.4")]:
             patch_apply(wine_variant_source_path, "40c9b46500c3606e966d5404d45b68a48609b6ea")
 
+    # winealsa.drv: Fix build with alsa-lib >= 1.2.15 where 'interface' is used as a parameter
+    # name in /usr/include/alsa/error.h.  Wine's objbase.h defines '#define interface struct'
+    # which conflicts.  Fedora 42 received alsa-lib 1.2.15.x updates in Jan 2026.
+    # ERROR: /usr/include/alsa/error.h:87:62: error: expected '{' before ',' token
+    #   typedef void (*snd_lib_log_handler_t)(int prio, int interface, ...
+    # GIT: no cherry-pickable upstream commit; fixed implicitly by pe/unix split in wine-7.5
+    #      (commits a2eb8b31b0b / c6bfab87390) which moved ALSA includes before Wine headers.
+    # mmdevdrv.c was introduced in wine-1.3.19 and always included asoundlib directly.
+    # midi.c got a direct asoundlib include in wine-1.3.30; before that it used alsa.h which
+    # already carried '#undef interface' (upstream commit 33f4108b693, 2005).
+    if wine_version >= Version("1.3.19") and wine_version < Version("7.5"):
+        patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
+            "0001-winealsa.drv-undef-interface-before-ALSA-includes-pre-wine-7.5.patch"),
+            exclude_pattern="*/midi.c")
+    if wine_version >= Version("1.3.30") and wine_version < Version("7.5"):
+        patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
+            "0001-winealsa.drv-undef-interface-before-ALSA-includes-pre-wine-7.5.patch"),
+            exclude_pattern="*/mmdevdrv.c")
+
     # loader/preloader build failure with GCC 10.x optimizing wld_memset() into a memset(3) call.
     # ERROR:  /usr/bin/ld: preloader.o: in function `wld_memset':
     #          .../loader/preloader.c:455: undefined reference to `memset'

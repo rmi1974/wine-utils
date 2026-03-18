@@ -1,0 +1,51 @@
+From: wine-utils compat patch
+Subject: [PATCH] winealsa.drv: undef 'interface' macro before ALSA includes
+
+alsa-lib >= 1.2.15 (released 2025-12-07) uses 'interface' as a parameter
+name in /usr/include/alsa/error.h (snd_lib_log_handler_t typedef and
+related functions).  Wine's objbase.h defines '#define interface struct',
+which causes a parse error when the ALSA headers are included after Wine
+headers have been processed.
+
+Fedora 42 received alsa-lib 1.2.15.x updates in January 2026, breaking
+builds of older Wine versions inside the container.
+
+Fix: add '#undef interface' immediately before <alsa/asoundlib.h> in each
+affected file.  Not needed from wine-7.5 onward: the winealsa.drv ALSA
+code was restructured at that point (pe/unix split, commits a2eb8b31b0b /
+c6bfab87390) so that ALSA headers are included *before* any Wine headers
+in alsa.c / alsamidi.c, making the macro conflict impossible.
+
+History:
+  - midi.c:    direct asoundlib include introduced in wine-1.3.30
+               (commit 8258a5188cc "Remove wave, mixer, and dsound driver code")
+               Prior to that, midi.c used a local alsa.h wrapper which
+               already carried '#undef interface' (upstream commit 33f4108b693,
+               2005).
+  - mmdevdrv.c: introduced in wine-1.3.19 (commit 86e90c92af8),
+               has always included asoundlib directly without the guard.
+---
+ dlls/winealsa.drv/midi.c     | 1 +
+ dlls/winealsa.drv/mmdevdrv.c | 1 +
+ 2 files changed, 2 insertions(+)
+
+--- a/dlls/winealsa.drv/midi.c
++++ b/dlls/winealsa.drv/midi.c
+@@ -52,6 +52,7 @@
+ #include "dsound.h"
+ #include "wine/debug.h"
+
++#undef interface  /* objbase.h defines 'interface' as struct; alsa-lib >= 1.2.15 uses it as a parameter name */
+ #include <alsa/asoundlib.h>
+
+ WINE_DEFAULT_DEBUG_CHANNEL(midi);
+--- a/dlls/winealsa.drv/mmdevdrv.c
++++ b/dlls/winealsa.drv/mmdevdrv.c
+@@ -43,6 +43,7 @@
+ #include "audioclient.h"
+ #include "audiopolicy.h"
+
++#undef interface  /* objbase.h defines 'interface' as struct; alsa-lib >= 1.2.15 uses it as a parameter name */
+ #include <alsa/asoundlib.h>
+
+ WINE_DEFAULT_DEBUG_CHANNEL(alsa);
