@@ -17,23 +17,13 @@ import re
 import subprocess
 import sys
 import shutil
-import packaging
 import tempfile
 import stat
+from packaging.version import Version, parse as parse_version
 
 # Wine project upstream repos
 WINE_MAINLINE_GIT_URI = "https://gitlab.winehq.org/wine/wine.git"
 WINE_STAGING_GIT_URI = "https://gitlab.winehq.org/wine/wine-staging.git"
-
-def parse_version(version):
-    """Use parse from packaging.version or LooseVersion from distutils.version"""
-    global parse_version, Version
-    try:
-        from packaging.version import Version
-        from packaging.version import parse as parse_version
-    except ImportError:
-        from distutils.version import LooseVersion as parse_version
-    return parse_version(version)
 
 def run_command(command, cwd=None, env=None):
     """Run the specified command in a subprocess shell and show stdout
