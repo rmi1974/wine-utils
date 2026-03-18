@@ -1070,8 +1070,8 @@ def main():
 
         os.makedirs(wine_build_target_arch64_path, exist_ok=True)
 
-        env_initialize_or_append(my_env, "CFLAGS", " {0} {1}".format(wine_cflags_common, wine_cflags_target_arch64))
-        env_initialize_or_append(my_env, "MAKEFLAGS", " -j{0} -l{0}".format(args.jobs))
+        env_initialize(my_env, "CFLAGS", " {0} {1}".format(wine_cflags_common, wine_cflags_target_arch64))
+        env_initialize(my_env, "MAKEFLAGS", " -j{0} -l{0}".format(args.jobs))
 
         logfile64 = "build_{0}.log".format(wine_target_arch64)
 
@@ -1101,8 +1101,8 @@ def main():
 
         os.makedirs( wine_build_target_arch32_path, exist_ok=True)
 
-        env_initialize_or_append(my_env, "CFLAGS", " {0} {1}".format( wine_cflags_common, wine_cflags_target_arch32))
-        env_initialize_or_append(my_env, "MAKEFLAGS", " -j{0} -l{0}".format(args.jobs))
+        env_initialize(my_env, "CFLAGS", " {0} {1}".format( wine_cflags_common, wine_cflags_target_arch32))
+        env_initialize(my_env, "MAKEFLAGS", " -j{0} -l{0}".format(args.jobs))
 
         logfile32 = "build_{0}.log".format( wine_target_arch32)
 
