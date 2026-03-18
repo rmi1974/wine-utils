@@ -33,15 +33,17 @@ def run_command(command, cwd=None, env=None):
         cwd (str): Working directory for the command.
         env (str): Custom shell environment for the intermediate shell.
     Returns:
-        if executed process exit code is non-zero, raises a CalledProcessError.
+        if executed process exit code is non-zero, exits with a clean error message.
 
     """
-    print("[*] Running following command:")
-    print("'{0}' (cwd='{1}')".format( command, cwd))
+    print(f"[*] Running: '{command}' (cwd='{cwd}')")
 
     # Some commands involve 'tee' (pipelines) hence prefix with 'pipefail' to capture failure as well
-    subprocess.run("set -o pipefail && {0}".format(command), cwd=cwd, env=env, check=True, shell=True,
-                    stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+    try:
+        subprocess.run(f"set -o pipefail && {command}", cwd=cwd, env=env, check=True, shell=True,
+                       stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
+    except subprocess.CalledProcessError as e:
+        sys.exit(f"Command failed (exit {e.returncode}): {command}")
 
 def run_command_stdout(command, cwd=None, env=None):
     """Run the specified command in a subprocess shell and return stdout
@@ -52,15 +54,13 @@ def run_command_stdout(command, cwd=None, env=None):
         env (str): Custom shell environment for the intermediate shell.
     Returns:
         stdout as string
-        if executed process exit code is non-zero, raises a CalledProcessError.
 
     """
-    print("[*] Running following command:")
-    print("'{0}' (cwd='{1}')".format( command, cwd))
+    print(f"[*] Running: '{command}' (cwd='{cwd}')")
 
     # Some commands involve 'tee' (pipelines) hence prefix with 'pipefail' to capture failure as well
-    return subprocess.run("set -o pipefail && {0}".format(command), stdout=subprocess.PIPE,
-                        cwd=cwd, env=env, shell=True, encoding="utf8").stdout.rstrip(os.linesep)
+    return subprocess.run(f"set -o pipefail && {command}", stdout=subprocess.PIPE,
+                          cwd=cwd, env=env, shell=True, encoding="utf8").stdout.rstrip(os.linesep)
 
 def patch_apply(source_path, commit_id_or_patchfile, exclude_pattern="", hunks=""):
     """ Apply a patch from Git commit into current branch using 'patch' tool.
@@ -81,32 +81,30 @@ def patch_apply(source_path, commit_id_or_patchfile, exclude_pattern="", hunks="
     if is_commit:
         # extract the patch from Git checkout
         patchfile_rel = run_command_stdout(
-            "git format-patch -1 --full-index --binary {0} 2> /dev/null".format(commit_id_or_patchfile),
+            f"git format-patch -1 --full-index --binary {commit_id_or_patchfile} 2> /dev/null",
             source_path
         )
         patchfile = os.path.join(source_path, patchfile_rel) if patchfile_rel else None
         if not patchfile or not os.path.exists(os.path.normpath(patchfile)):
-            sys.exit("Patch extraction of '{0}' failed, aborting!".format(commit_id_or_patchfile))
+            sys.exit(f"Patch extraction of '{commit_id_or_patchfile}' failed, aborting!")
     else:
         patchfile = os.path.normpath(commit_id_or_patchfile)
         if not os.path.exists(patchfile):
-            sys.exit("Local patch file '{0}' not found, aborting!".format(patchfile))
+            sys.exit(f"Local patch file '{patchfile}' not found, aborting!")
 
     # build filterdiff command
     filter_opts = "-p1"
     if exclude_pattern:
-        filter_opts += " -x '{0}'".format(exclude_pattern)
+        filter_opts += f" -x '{exclude_pattern}'"
     if hunks:
-        filter_opts += " --hunks={0}".format(hunks)
+        filter_opts += f" --hunks={hunks}"
 
     patch_stdout = run_command_stdout(
-        "filterdiff {0} < {1} | patch -p1 --forward --no-backup-if-mismatch 2>&1".format(
-            filter_opts, patchfile
-        ),
+        f"filterdiff {filter_opts} < {patchfile} | patch -p1 --forward --no-backup-if-mismatch 2>&1",
         source_path
     )
     if any(re.findall(r'failed|error:', patch_stdout, re.IGNORECASE)):
-        sys.exit("Patch '{0}' failed with output '{1}', aborting!".format(patchfile, patch_stdout))
+        sys.exit(f"Patch '{patchfile}' failed with output '{patch_stdout}', aborting!")
     # "Reversed (or previously applied) patch detected! Skipping patch." is not an error
 
 def bin_patch_apply(source_path, commit_id_or_patchfile, exclude_pattern=""):
@@ -125,7 +123,7 @@ def bin_patch_apply(source_path, commit_id_or_patchfile, exclude_pattern=""):
     is_commit = re.fullmatch(r"[0-9a-f]{7,40}", commit_id_or_patchfile) is not None
     if is_commit:
         patchfile = run_command_stdout(
-            "git format-patch -1 --full-index --binary {0} 2> /dev/null".format(commit_id_or_patchfile),
+            f"git format-patch -1 --full-index --binary {commit_id_or_patchfile} 2> /dev/null",
             source_path
         )
         patchfile = os.path.join(source_path, patchfile)
@@ -133,12 +131,13 @@ def bin_patch_apply(source_path, commit_id_or_patchfile, exclude_pattern=""):
         patchfile = os.path.normpath(commit_id_or_patchfile)
 
     if not patchfile or not os.path.exists(patchfile):
-        sys.exit("Patch extraction of '{0}' failed, aborting!".format(commit_id_or_patchfile))
+        sys.exit(f"Patch extraction of '{commit_id_or_patchfile}' failed, aborting!")
 
-    patch_stdout = run_command_stdout("filterdiff -p1 -x '{0}' < {1} | git apply 2>&1".format(
-                 exclude_pattern, patchfile), source_path)
+    patch_stdout = run_command_stdout(
+        f"filterdiff -p1 -x '{exclude_pattern}' < {patchfile} | git apply 2>&1",
+        source_path)
     if any(re.findall(r'not apply|error:', patch_stdout, re.IGNORECASE)):
-        sys.exit("Git apply '{0}' failed with output '{1}', aborting!".format(patchfile, patch_stdout))
+        sys.exit(f"Git apply '{patchfile}' failed with output '{patch_stdout}', aborting!")
     # "Reversed (or previously applied) patch detected!  Skipping patch." is not an error
 
 def create_config_wrapper(org_config, arg_filter, output_remove):
@@ -303,15 +302,15 @@ def main():
     dash_version = ""
     if args.version:
         # prepend dash to encode it into build/install folder names
-        dash_version = "-{0}".format(args.version)
+        dash_version = f"-{args.version}"
 
     ##################################################################
     # set up various paths for variants: mainline, staging and custom
 
     # source paths
-    wine_mainline_source_path = "{0}/mainline-src{1}".format(wine_workspace_path, dash_version)
-    wine_variant_source_path = "{0}/{1}-src{2}".format(wine_workspace_path, args.variant, dash_version)
-    wine_staging_patches_path = "{0}/staging-patches{1}".format(wine_workspace_path, dash_version)
+    wine_mainline_source_path = f"{wine_workspace_path}/mainline-src{dash_version}"
+    wine_variant_source_path = f"{wine_workspace_path}/{args.variant}-src{dash_version}"
+    wine_staging_patches_path = f"{wine_workspace_path}/staging-patches{dash_version}"
 
     # base path to patches
     script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -321,22 +320,22 @@ def main():
     # version/release handling part #2
     if args.version:
         # check if version is exists
-        stdout = run_command_stdout("git describe --abbrev=0 wine-{0} 2> /dev/null | sed 's/wine-//'".format(args.version),
-                            "{0}/{1}-src".format(wine_workspace_path, args.variant))
+        stdout = run_command_stdout(f"git describe --abbrev=0 wine-{args.version} 2> /dev/null | sed 's/wine-//'",
+                            f"{wine_workspace_path}/{args.variant}-src")
         wine_version = parse_version(stdout)
         if not isinstance(wine_version, Version):
-            sys.exit("Unknown Wine version '{0}', aborting!".format(args.version))
+            sys.exit(f"Unknown Wine version '{args.version}', aborting!")
     else:
         # no version given but we need one to apply fixups on custom builds
         # also handle case when variant isn't checked out yet
         if not os.path.exists(wine_variant_source_path):
-            run_command("git clone {0} {1}".format(wine_mainline_source_path, wine_variant_source_path))
+            run_command(f"git clone {wine_mainline_source_path} {wine_variant_source_path}")
 
         stdout = run_command_stdout("git describe --abbrev=0 2> /dev/null | sed 's/wine-//'",
                             wine_variant_source_path)
         wine_version = parse_version(stdout)
 
-    print("Building Wine {0}".format( wine_version))
+    print(f"Building Wine {wine_version}")
 
     # for exporting variables into current shell environment
     my_env = dict(os.environ.copy())
@@ -346,7 +345,7 @@ def main():
 
     # Refuse to enable experimental Wow64 mode on older Wine versions
     if wine_version < Version("9.0") and args.enable_experimental_wow64:
-        sys.exit("Experimental Wow64 mode not supported with requested Wine version {0}, aborting!".format(wine_version))
+        sys.exit(f"Experimental Wow64 mode not supported with requested Wine version {wine_version}, aborting!")
     # new WoW64 mode builds requires MinGW cross compiler
     if args.enable_experimental_wow64 and args.disable_mingw:
         sys.exit("Experimental Wow64 mode requires MinGW cross-compiler, aborting!")
@@ -404,15 +403,13 @@ def main():
     wine_cross_compile_options = ""
     if args.cross_compile_prefix:
 
-        wine_cross_compile_options += " --host={0} host_alias={1}".format(
-            args.cross_compile_prefix.rstrip("-"), args.cross_compile_prefix.rstrip("-"))
+        cc_prefix = args.cross_compile_prefix.rstrip("-")
+        wine_cross_compile_options += f" --host={cc_prefix} host_alias={cc_prefix}"
         # Need to set '--with-wine-tools' when cross compiling.
         # The path must point the tools subdirectory of a wine build compiled for the *host* system.
-        wine_cross_compile_options += " --with-wine-tools={0}/{1}-build{2}-{3}".format(
-            wine_workspace_path, args.variant, dash_version, wine_host_arch64)
+        wine_cross_compile_options += f" --with-wine-tools={wine_workspace_path}/{args.variant}-build{dash_version}-{wine_host_arch64}"
 
-        wine_target_arch = run_command_stdout("{0}gcc -dumpmachine | cut -d '-' -f1 2>&1".format(
-                                args.cross_compile_prefix))
+        wine_target_arch = run_command_stdout(f"{args.cross_compile_prefix}gcc -dumpmachine | cut -d '-' -f1 2>&1")
 
         if "arm" in wine_target_arch:
             wine_target_arch32 = wine_target_arch
@@ -425,8 +422,8 @@ def main():
             cc_opt_fpu = run_command_stdout(r"$CC -Q --help=target | grep -m1 -oP '\bmfpu=\s+\K\w+'")
             cc_opt_arch = run_command_stdout(r"$CC -Q --help=target | grep -m1 -oP '\bmarch=\s+\K\w+'")
 
-            wine_cross_compile_options += " --with-float-abi={0}".format(cc_opt_floatabi)
-            env_initialize_or_append(my_env, "EXTRA_TARGETFLAGS", " -march={0} -mfpu={1}".format(cc_opt_arch, cc_opt_fpu))
+            wine_cross_compile_options += f" --with-float-abi={cc_opt_floatabi}"
+            env_initialize_or_append(my_env, "EXTRA_TARGETFLAGS", f" -march={cc_opt_arch} -mfpu={cc_opt_fpu}")
 
         elif "aarch64" in wine_target_arch:
             wine_target_arch32 = ""
@@ -434,7 +431,7 @@ def main():
             wine_install_arch64_pe_dir = "/aarch64-windows"
             wine_install_arch64_so_dir = "/aarch64-unix"
         else:
-            sys.exit("Unsupported target architecture '{0}', aborting!".format(wine_target_arch))
+            sys.exit(f"Unsupported target architecture '{wine_target_arch}', aborting!")
 
     # common CFLAGS
     wine_cflags_common = "-O2 -g"
@@ -549,38 +546,34 @@ def main():
 
     # target arch specific paths for 32-bit Wine
     if wine_target_arch32:
-        wine_build_target_arch32_path = "{0}/{1}-build{2}-{3}".format(
-            wine_workspace_path, args.variant, dash_version, wine_target_arch32)
-        wine_install_prefix = "{0}/{1}-install{2}-{3}".format(
-            wine_workspace_path, args.variant, dash_version, wine_target_arch32)
+        wine_build_target_arch32_path = f"{wine_workspace_path}/{args.variant}-build{dash_version}-{wine_target_arch32}"
+        wine_install_prefix = f"{wine_workspace_path}/{args.variant}-install{dash_version}-{wine_target_arch32}"
     # target arch specific paths for 64-bit Wine
     if wine_target_arch64:
-        wine_build_target_arch64_path = "{0}/{1}-build{2}-{3}".format(
-            wine_workspace_path, args.variant, dash_version, wine_target_arch64)
+        wine_build_target_arch64_path = f"{wine_workspace_path}/{args.variant}-build{dash_version}-{wine_target_arch64}"
         # includes shared WoW64 install as well
-        wine_install_prefix = "{0}/{1}-install{2}-{3}".format(
-            wine_workspace_path, args.variant, dash_version, wine_target_arch64)
+        wine_install_prefix = f"{wine_workspace_path}/{args.variant}-install{dash_version}-{wine_target_arch64}"
 
     ##################################################################
     # Set up mainline source tree clone. It also needs to be present for Wine-Staging.
     if not os.path.exists(wine_mainline_source_path):
 
         # local git mirror to speed up checkout and save disk space
-        wine_local_clone_source = "{0}/mainline-src-reference-gitmirror".format(wine_workspace_path)
+        wine_local_clone_source = f"{wine_workspace_path}/mainline-src-reference-gitmirror"
         if not os.path.exists(wine_local_clone_source):
             # create local git mirror for the first time
-            run_command("git clone --mirror {0} {1}".format(WINE_MAINLINE_GIT_URI, wine_local_clone_source))
+            run_command(f"git clone --mirror {WINE_MAINLINE_GIT_URI} {wine_local_clone_source}")
         else:
             # ensure local git mirror is up to date
             run_command("git fetch --all || true", cwd=wine_local_clone_source)
 
         # use '--shared' to speed up checkout and save disk space
-        run_command("git clone --shared {0} {1}".format(wine_local_clone_source, wine_mainline_source_path))
+        run_command(f"git clone --shared {wine_local_clone_source} {wine_mainline_source_path}")
 
     # reset mainline source tree when version has been specified
     if args.version and args.variant != "staging" and not args.no_reset_source:
         # reset the tree to specific version
-        run_command("git reset --hard wine-{0}".format(args.version), wine_mainline_source_path)
+        run_command(f"git reset --hard wine-{args.version}", wine_mainline_source_path)
         # removed any untracked files
         run_command("git clean -dxf", wine_mainline_source_path)
 
@@ -589,21 +582,21 @@ def main():
     if args.variant == "staging":
 
         if not os.path.exists(wine_staging_patches_path):
-            run_command("git clone {0} {1}".format(WINE_STAGING_GIT_URI, wine_staging_patches_path))
+            run_command(f"git clone {WINE_STAGING_GIT_URI} {wine_staging_patches_path}")
         else:
             run_command("git fetch --all || true", cwd=wine_staging_patches_path)
 
         if not os.path.exists(wine_variant_source_path):
-            run_command("git clone {0} {1}".format(wine_mainline_source_path, wine_variant_source_path))
+            run_command(f"git clone {wine_mainline_source_path} {wine_variant_source_path}")
         else:
             run_command("git fetch --all || true", cwd=wine_variant_source_path)
 
         if not args.no_reset_source:
             if args.version:
                 # reset source tree to specific version
-                run_command("git reset --hard v{0}".format(args.version), wine_staging_patches_path)
+                run_command(f"git reset --hard v{args.version}", wine_staging_patches_path)
                 # reset source tree to specific version
-                run_command("git reset --hard wine-{0}".format(args.version), wine_variant_source_path)
+                run_command(f"git reset --hard wine-{args.version}", wine_variant_source_path)
             else:
                 # reset source tree to where upstream points to
                 run_command("git reset --hard @{upstream}", wine_staging_patches_path)
@@ -611,8 +604,7 @@ def main():
                 run_command("git reset --hard @{upstream}", wine_variant_source_path)
 
         # apply staging patches to the clone
-        run_command("{0}/staging/patchinstall.py DESTDIR={1} --backend=git-apply --all".format(
-            wine_staging_patches_path, wine_variant_source_path))
+        run_command(f"{wine_staging_patches_path}/staging/patchinstall.py DESTDIR={wine_variant_source_path} --backend=git-apply --all")
 
     ##################################################################
     # apply Wine build fixups for older Wine versions
@@ -620,7 +612,7 @@ def main():
     # ensure required tools exist
     for tool in ("git", "filterdiff", "patch"):
         if not shutil.which(tool):
-            sys.exit("Required tool '{0}' not found in PATH, aborting!".format(tool))
+            sys.exit(f"Required tool '{tool}' not found in PATH, aborting!")
 
     # ERROR: tools/wrc/parser.y:2840:15: error: 'YYLEX' undeclared (first use in this function)
     #        and various other locations with problematic bison directives
@@ -971,7 +963,7 @@ def main():
         # original config tool is provided with full path so wrapper doesn't create a recursion
         wrapper_path = os.path.dirname( create_config_wrapper(shutil.which("freetype-config"), "--cflags", "-pthread"))
         # inject wrapper into PATH
-        env_initialize(my_env, "PATH", "{0}:{1}".format(wrapper_path, my_env["PATH"]))
+        env_initialize(my_env, "PATH", f"{wrapper_path}:{my_env['PATH']}")
 
     # ERROR: winebuild: llvm-mingw-20211002-ucrt-ubuntu-18.04-x86_64/bin/x86_64-w64-mingw32-dlltool failed with status 1
     #        make: *** [Makefile:1843: dlls/advpack/libadvpack.delay.a] Error 1
@@ -1089,10 +1081,10 @@ def main():
 
         os.makedirs(wine_build_target_arch64_path, exist_ok=True)
 
-        env_initialize(my_env, "CFLAGS", " {0} {1}".format(wine_cflags_common, wine_cflags_target_arch64))
-        env_initialize(my_env, "MAKEFLAGS", " -j{0} -l{0}".format(args.jobs))
+        env_initialize(my_env, "CFLAGS", f" {wine_cflags_common} {wine_cflags_target_arch64}")
+        env_initialize(my_env, "MAKEFLAGS", f" -j{args.jobs} -l{args.jobs}")
 
-        logfile64 = "build_{0}.log".format(wine_target_arch64)
+        logfile64 = f"build_{wine_target_arch64}.log"
 
         if not args.no_configure:
 
@@ -1104,15 +1096,13 @@ def main():
 
             setup_pkg_config_env(my_env, "x86_64", wine_version)
 
-            run_command("{0}/configure --prefix={1} {2} {3} {4} 2>&1 | tee {5}".format(
-                wine_variant_source_path, wine_install_prefix, wine_cross_compile_options,
-                configure_options, enable_arch_args, logfile64),
+            run_command(f"{wine_variant_source_path}/configure --prefix={wine_install_prefix} {wine_cross_compile_options} {configure_options} {enable_arch_args} 2>&1 | tee {logfile64}",
                 wine_build_target_arch64_path, my_env)
 
             # 32-bit part of WoW64 build: ERROR: checking for the directory containing the Wine tools...
             #  configure: error: could not find Wine tools in mainline-build-1.9.1-x86_64
             if wine_version < Version("1.9.2"):
-                run_command("make tools/winebuild 2>&1 | tee -a {0}".format(logfile64), wine_build_target_arch64_path, my_env)
+                run_command(f"make tools/winebuild 2>&1 | tee -a {logfile64}", wine_build_target_arch64_path, my_env)
 
     ##################################################################
     # configure 32-bit Wine
@@ -1120,18 +1110,16 @@ def main():
 
         os.makedirs( wine_build_target_arch32_path, exist_ok=True)
 
-        env_initialize(my_env, "CFLAGS", " {0} {1}".format( wine_cflags_common, wine_cflags_target_arch32))
-        env_initialize(my_env, "MAKEFLAGS", " -j{0} -l{0}".format(args.jobs))
+        env_initialize(my_env, "CFLAGS", f" {wine_cflags_common} {wine_cflags_target_arch32}")
+        env_initialize(my_env, "MAKEFLAGS", f" -j{args.jobs} -l{args.jobs}")
 
-        logfile32 = "build_{0}.log".format( wine_target_arch32)
+        logfile32 = f"build_{wine_target_arch32}.log"
 
         if not args.no_configure:
 
             setup_pkg_config_env(my_env, "i386", wine_version)
 
-            run_command("{0}/configure --prefix={1} {2} {3} --with-wine64={4} 2>&1 | tee {5}".format(
-                wine_variant_source_path, wine_install_prefix, wine_cross_compile_options,
-                configure_options, wine_build_target_arch64_path, logfile32),
+            run_command(f"{wine_variant_source_path}/configure --prefix={wine_install_prefix} {wine_cross_compile_options} {configure_options} --with-wine64={wine_build_target_arch64_path} 2>&1 | tee {logfile32}",
                 wine_build_target_arch32_path, my_env)
 
     # don't attempt to build if "configure only" mode requested
@@ -1142,13 +1130,13 @@ def main():
     # build 64-bit Wine
     if wine_build_target_arch64_path:
 
-        run_command("make 2>&1 | tee -a {0}".format(logfile64), wine_build_target_arch64_path, my_env)
+        run_command(f"make 2>&1 | tee -a {logfile64}", wine_build_target_arch64_path, my_env)
 
     ##################################################################
     # build 32-bit Wine
     if wine_build_target_arch32_path and not args.enable_experimental_wow64:
 
-        run_command("make 2>&1 | tee -a {0}".format(logfile32), wine_build_target_arch32_path, my_env)
+        run_command(f"make 2>&1 | tee -a {logfile32}", wine_build_target_arch32_path, my_env)
 
     # always remove old install directories before install step
     shutil.rmtree(wine_install_prefix, ignore_errors=True)
@@ -1157,40 +1145,35 @@ def main():
     # install 64-bit Wine
     if wine_build_target_arch64_path:
 
-        run_command("make install | tee -a {0}".format(logfile64), wine_build_target_arch64_path, my_env)
+        run_command(f"make install | tee -a {logfile64}", wine_build_target_arch64_path, my_env)
 
         # Copy the PDB files into install DESTDIR.
         if not args.enable_experimental_wow64:
-            run_command(r"find {0} -type f -name '*.pdb' -exec cp -v '{{}}' '{1}/{2}' \;".format(
-                wine_build_target_arch64_path, wine_install_prefix, wine_install_arch64_pe_dir))
+            run_command(rf"find {wine_build_target_arch64_path} -type f -name '*.pdb' -exec cp -v '{{}}' '{wine_install_prefix}/{wine_install_arch64_pe_dir}' \;")
         else:
-            run_command(r"find {0} -type f -path '*/x86_64-windows/*.pdb' -exec cp -v '{{}}' '{1}/{2}' \;".format(
-                wine_build_target_arch64_path, wine_install_prefix, wine_install_arch64_pe_dir))
-            run_command(r"find {0} -type f -path '*/i386-windows/*.pdb' -exec cp -v '{{}}' '{1}/{2}' \;".format(
-                wine_build_target_arch64_path, wine_install_prefix, wine_install_arch32_pe_dir))
+            run_command(rf"find {wine_build_target_arch64_path} -type f -path '*/x86_64-windows/*.pdb' -exec cp -v '{{}}' '{wine_install_prefix}/{wine_install_arch64_pe_dir}' \;")
+            run_command(rf"find {wine_build_target_arch64_path} -type f -path '*/i386-windows/*.pdb' -exec cp -v '{{}}' '{wine_install_prefix}/{wine_install_arch32_pe_dir}' \;")
 
     ##################################################################
     # install 32-bit Wine
     if wine_build_target_arch64_path and not args.enable_experimental_wow64:
 
-        run_command("make install | tee -a {0}".format(logfile32), wine_build_target_arch32_path, my_env)
+        run_command(f"make install | tee -a {logfile32}", wine_build_target_arch32_path, my_env)
 
         # Make a lib32 symlink to lib to allow 'winegcc -m32'.
         # Since Wine 6.8, libraries are installed into architecture-specific subdirectories.
         if wine_version < Version("6.8"):
-            os.symlink("lib", "{0}/lib32".format(wine_install_prefix))
+            os.symlink("lib", f"{wine_install_prefix}/lib32")
 
         # Copy the PDB files into install DESTDIR.
-        run_command(r"find {0} -type f -name '*.pdb' -exec cp -v '{{}}' '{1}/{2}' \;".format(
-            wine_build_target_arch32_path, wine_install_prefix, wine_install_arch32_pe_dir))
+        run_command(rf"find {wine_build_target_arch32_path} -type f -name '*.pdb' -exec cp -v '{{}}' '{wine_install_prefix}/{wine_install_arch32_pe_dir}' \;")
 
-    print(
-    """
+    print(f"""
     Run the following command to register this Wine variant in environment
     ----------------------------------------------------------------------
-    export PATH={0}/bin/:$PATH
+    export PATH={wine_install_prefix}/bin/:$PATH
     ----------------------------------------------------------------------
-    """.format( wine_install_prefix))
+    """)
 
 if __name__== "__main__":
     main()
