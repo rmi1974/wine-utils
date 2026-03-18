@@ -510,7 +510,7 @@ def main():
         if args.enable_nopic:
             wine_cflags_target_arch64 = "-fno-PIC -mcmodel=large"
 
-    if "i386" or "i686" in wine_target_arch32:
+    if "i386" in wine_target_arch32 or "i686" in wine_target_arch32:
         if args.enable_nopic:
             wine_cflags_target_arch32 = "-fno-PIC"
 
