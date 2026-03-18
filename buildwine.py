@@ -228,6 +228,33 @@ def env_initialize_or_append(env, key, value):
 def env_initialize(env, key, value):
     env[key] = value
 
+def make_patch_applier(wine_version, source_path, patches_path):
+    """Return (apply, local_patch) helpers bound to wine_version and source_path.
+
+    apply(commit_or_file, *, min_ver=None, max_ver=None, exact=None,
+          exclude=(), binary=False, **kwargs)
+        Apply patch if wine_version falls within the given range/version constraints.
+    local_patch(filename) -> str
+        Return full path to a file in the patches/ directory.
+    """
+    def apply(commit_or_file, *, min_ver=None, max_ver=None, exact=None,
+              exclude=(), binary=False, **kwargs):
+        if exact is not None and wine_version != Version(exact):
+            return
+        if min_ver is not None and wine_version < Version(min_ver):
+            return
+        if max_ver is not None and wine_version >= Version(max_ver):
+            return
+        if wine_version in {Version(v) for v in exclude}:
+            return
+        fn = bin_patch_apply if binary else patch_apply
+        fn(source_path, commit_or_file, **kwargs)
+
+    def local_patch(filename):
+        return os.path.join(patches_path, filename)
+
+    return apply, local_patch
+
 def main():
 
     # Common workspace root path to Wine artifact directories: sources, build, install etc.
@@ -614,36 +641,26 @@ def main():
         if not shutil.which(tool):
             sys.exit(f"Required tool '{tool}' not found in PATH, aborting!")
 
+    pa, pf = make_patch_applier(wine_version, wine_variant_source_path, wine_patches_path)
+
     # ERROR: tools/wrc/parser.y:2840:15: error: 'YYLEX' undeclared (first use in this function)
     #        and various other locations with problematic bison directives
     # URL: https://bugs.winehq.org/show_bug.cgi?id=34329
     # GIT: https://source.winehq.org/git/wine.git/commit/8fcac3b2bb8ce4cdbcffc126df779bf1be168882
     # FIXED: wine-1.7.0
     if wine_version >= Version("1.3.28") and wine_version < Version("1.7.0"):
-        # stable >= 1.6.1 already has cherry-pick as 572f97b1add2731ed6f14e2eea1ed5db2b1071dd
-        if wine_version not in [Version("1.6.1"), Version("1.6.2")]:
-            patch_apply(wine_variant_source_path, "3f98185fb8f88c181877e909ab1b6422fb9bca1e")
-        # stable >= 1.6.1 already has cherry-pick as 6ac684f25e12e3f490437dd101ad8150d43f43bf
-        if wine_version not in [Version("1.6.1"), Version("1.6.2")]:
-            patch_apply(wine_variant_source_path, "8fcac3b2bb8ce4cdbcffc126df779bf1be168882")
-        # stable >= 1.6.1 already has cherry-pick as db04cfc20d950d0e6e46f55d314b8f763b56e79a
-        if wine_version not in [Version("1.6.1"), Version("1.6.2")]:
-            patch_apply(wine_variant_source_path, "bda5a2ffb833b2824325bd9361b30dbaf5f78068")
+        pa("3f98185fb8f88c181877e909ab1b6422fb9bca1e", exclude=["1.6.1", "1.6.2"])  # stable >= 1.6.1: 572f97b1add
+        pa("8fcac3b2bb8ce4cdbcffc126df779bf1be168882", exclude=["1.6.1", "1.6.2"])  # stable >= 1.6.1: 6ac684f25e1
+        pa("bda5a2ffb833b2824325bd9361b30dbaf5f78068", exclude=["1.6.1", "1.6.2"])  # stable >= 1.6.1: db04cfc20d9
     # jscript: https://source.winehq.org/git/wine.git/commitdiff/9ebdd111264cfa646dd5219b5874166eb59217c1
-    if wine_version >= Version("1.1.10") and wine_version < Version("1.7.0"):
-        # stable >= 1.6.1 already has cherry-pick as 2516f6d5bfb6e9395bfa98ccad9bad6e17bd82fa
-        if wine_version not in [Version("1.6.1"), Version("1.6.2")]:
-            patch_apply(wine_variant_source_path, "ffbe1ca986bd299e1fc894440849914378adbf5c")
+    pa("ffbe1ca986bd299e1fc894440849914378adbf5c", min_ver="1.1.10", max_ver="1.7.0",
+        exclude=["1.6.1", "1.6.2"])  # stable >= 1.6.1: 2516f6d5bf
     # vbscript: https://source.winehq.org/git/wine.git/commitdiff/80bcaf8d7ba68aea7090cac2a18e4e7a13147e88
-    if wine_version >= Version("1.3.28") and wine_version < Version("1.7.0"):
-        # stable >= 1.6.1 already has cherry-pick as 8002ba95867c1f653635b23612c3136a7c899ab0
-        if wine_version not in [Version("1.6.1"), Version("1.6.2")]:
-            patch_apply(wine_variant_source_path, "f86c46f6403fe338a544ab134bdf563c5b0934ae")
+    pa("f86c46f6403fe338a544ab134bdf563c5b0934ae", min_ver="1.3.28", max_ver="1.7.0",
+        exclude=["1.6.1", "1.6.2"])  # stable >= 1.6.1: 8002ba9586
     # wbemprox: https://source.winehq.org/git/wine.git/commitdiff/f6be21103b441180c8557aa6bc2845e5428271a4
-    if wine_version >= Version("1.5.7") and wine_version < Version("1.7.0"):
-        # stable >= 1.6.1 already has cherry-pick as 98b1b7a89c175dee4f02e40b67f7435d765942c5
-        if wine_version not in [Version("1.6.1"), Version("1.6.2")]:
-            patch_apply(wine_variant_source_path, "c14e322a92a24e704836c5c12207c694a30e805f")
+    pa("c14e322a92a24e704836c5c12207c694a30e805f", min_ver="1.5.7", max_ver="1.7.0",
+        exclude=["1.6.1", "1.6.2"])  # stable >= 1.6.1: 98b1b7a89c
 
     # ERROR: err:msidb:get_tablecolumns column 1 out of range (gcc 4.9+ problem, breaks msi installers)
     # URL: https://bugs.winehq.org/show_bug.cgi?id=36139
@@ -651,8 +668,7 @@ def main():
     # FIXED: wine-1.7.20
     # NOTE: wine-1.3.22 reformatted code: 'maxcount*sizeof(*colinfo)' -> 'maxcount * sizeof(*colinfo)'
     # https://source.winehq.org/git/wine.git/commitdiff/1ae309f98194f56b3734943cd63d8a798319fb34
-    if wine_version >= Version("1.3.28") and wine_version < Version("1.7.20"):
-        patch_apply(wine_variant_source_path, "deb274226783ab886bdb44876944e156757efe2b")
+    pa("deb274226783ab886bdb44876944e156757efe2b", min_ver="1.3.28", max_ver="1.7.20")
 
     # ERROR: dlls/wineps.drv/psdrv.h:389:5: error: unknown type name 'PSDRV_DEVMODEA'
     # ERROR: dlls/wineps.drv/init.c:43:14: error: unknown type name 'PSDRV_DEVMODE'
@@ -663,93 +679,75 @@ def main():
     if wine_version >= Version("1.3.28") and wine_version < Version("1.5.2"):
         # Way too many patches for fixing this, even across modules. Disable module.
         configure_options += " --disable-wineps.drv"
-    if wine_version >= Version("1.5.2") and wine_version < Version("1.5.7"):
-        patch_apply(wine_variant_source_path, "bdaddc4b7c4b4391b593a5f4ab91b8121c698bef")
+    pa("bdaddc4b7c4b4391b593a5f4ab91b8121c698bef", min_ver="1.5.2", max_ver="1.5.7")
 
     # ERROR: dlls/winspool.drv/info.c:779:13: error: 'cupsGetPPD' undeclared here (not in a function); did you mean 'cupsGetFd'?
     # URL: https://bugs.winehq.org/show_bug.cgi?id=40851
     # GIT: https://source.winehq.org/git/wine.git/commit/10065d2acd0a9e1e852a8151c95569b99d1b3294
     # REBASE-FIX needed due to: https://source.winehq.org/git/wine.git/commitdiff/cf0e96c6d0edc3a22b8ee5ac423d9b6b652ce0e5
     # FIXED: wine-1.9.14
-    if wine_version >= Version("1.3.28") and wine_version < Version("1.7.12"):
-        patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
-            "0001-winspool.drv-include-cups-ppd.h-to-fix-building-pre-wine-1.7.12.patch"))
-    if wine_version >= Version("1.7.12") and wine_version < Version("1.9.14"):
-        # stable > 1.8.3 already has cherry-pick as 17a826192ec458b1f090021db7f03e31fbfe7464
-        if wine_version not in [Version("1.8.4"), Version("1.8.5"), Version("1.8.6"), Version("1.8.7")]:
-            patch_apply(wine_variant_source_path, "10065d2acd0a9e1e852a8151c95569b99d1b3294")
+    pa(pf("0001-winspool.drv-include-cups-ppd.h-to-fix-building-pre-wine-1.7.12.patch"),
+        min_ver="1.3.28", max_ver="1.7.12")
+    pa("10065d2acd0a9e1e852a8151c95569b99d1b3294", min_ver="1.7.12", max_ver="1.9.14",
+        exclude=["1.8.4", "1.8.5", "1.8.6", "1.8.7"])  # stable > 1.8.3: 17a826192ec
 
     # ERROR: dlls/secur32/schannel_gnutls.c:45:12: error: conflicting types for 'gnutls_cipher_get_block_size'
     # URL: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=832275
     # GIT: https://source.winehq.org/git/wine.git/commit/bf5ac531a030bce9e798ab66bc53e84a65ca8fdb
     # FIXED: wine-1.9.13
-    if wine_version >= Version("1.7.46") and wine_version < Version("1.9.13"):
-        # stable > 1.8.3 already has cherry-pick as fad28964903e708e3236ebe72c11a6024d349db1
-        if wine_version not in [Version("1.8.4"), Version("1.8.5"), Version("1.8.6"), Version("1.8.7")]:
-            patch_apply(wine_variant_source_path, "bf5ac531a030bce9e798ab66bc53e84a65ca8fdb")
+    pa("bf5ac531a030bce9e798ab66bc53e84a65ca8fdb", min_ver="1.7.46", max_ver="1.9.13",
+        exclude=["1.8.4", "1.8.5", "1.8.6", "1.8.7"])  # stable > 1.8.3: fad28964903
 
     # ERROR: include/winsock.h:401: warning: "INVALID_SOCKET" redefined
     # GIT: https://source.winehq.org/git/wine.git/commit/28173f06932edd85a64a952120d29b9bb1e762ea
     # FIXED: wine-2.13
     # wpcap code introduced by: https://source.winehq.org/git/wine.git/commitdiff/fa67586811765d88d3b4108b3e5b4e51bb07868f
-    if wine_version >= Version("1.7.25") and wine_version < Version("2.13"):
-        # stable > 2.0.2 already has cherry-pick as 773cad9f16ecc9aaf751e05cdf2f6f408c582305
-        if wine_version not in [Version("2.0.3"), Version("2.0.4"), Version("2.0.5")]:
-            bin_patch_apply(wine_variant_source_path, "28173f06932edd85a64a952120d29b9bb1e762ea")
+    pa("28173f06932edd85a64a952120d29b9bb1e762ea", binary=True, min_ver="1.7.25", max_ver="2.13",
+        exclude=["2.0.3", "2.0.4", "2.0.5"])  # stable > 2.0.2: 773cad9f16e
 
     # wine-1.5.30-x86_64/bin/wine:
     #       error while loading shared libraries: libwine.so.1: cannot open shared object file: No such file or directory
     # URL: https://bugs.winehq.org/show_bug.cgi?id=33560
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/ce4b6451aabbe83809c7483c748cfa009cc090d6
     # FIXED: wine-1.5.31
-    if wine_version >= Version("1.5.30") and wine_version < Version("1.5.31"):
-        patch_apply(wine_variant_source_path, "ce4b6451aabbe83809c7483c748cfa009cc090d6")
+    pa("ce4b6451aabbe83809c7483c748cfa009cc090d6", min_ver="1.5.30", max_ver="1.5.31")
 
     # ERROR: rm -f fonts && ln -s ../mainline-build-1.9.5-x86_64/fonts fonts
     #        rm: cannot remove 'fonts': Is a directory
     # URL: https://bugs.winehq.org/show_bug.cgi?id=40253
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/c6d6dcee47eb97fd75e389434d4136de2f31414c
     # FIXED: wine-1.9.6
-    if wine_version >= Version("1.9.5") and wine_version < Version("1.9.6"):
-        patch_apply(wine_variant_source_path, "c6d6dcee47eb97fd75e389434d4136de2f31414c")
+    pa("c6d6dcee47eb97fd75e389434d4136de2f31414c", min_ver="1.9.5", max_ver="1.9.6")
 
     # ERROR: gstreamer-1.0 base plugins 32-bit development files not found, gstreamer support disabled
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/20d41d9e2810696ca38598abcef6da8e77f9aae7
     # FIXED: wine-2.10
-    if wine_version >= Version("1.4") and wine_version < Version("2.10"):
-        patch_apply(wine_variant_source_path, "20d41d9e2810696ca38598abcef6da8e77f9aae7")
+    pa("20d41d9e2810696ca38598abcef6da8e77f9aae7", min_ver="1.4", max_ver="2.10")
 
     # configure: Don't use X_PRE_LIBS.
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/bb50d6fd9512a9a05306c56112bbcdc6de6c8d65
     # FIXED: wine-1.7.2
-    if wine_version >= Version("1.5.17") and wine_version < Version("1.7.2"):
-        # stable >= 1.6.1 already has cherry-pick as 4238c42c7c5168841b5703ed20f2a6cef403b181
-        if wine_version not in [Version("1.6.1"), Version("1.6.2")]:
-            patch_apply(wine_variant_source_path, "bb50d6fd9512a9a05306c56112bbcdc6de6c8d65")
+    pa("bb50d6fd9512a9a05306c56112bbcdc6de6c8d65", min_ver="1.5.17", max_ver="1.7.2",
+        exclude=["1.6.1", "1.6.2"])  # stable >= 1.6.1: 4238c42c7c5
 
     # ERROR: configure: libOSMesa 64-bit development files not found (or too old)
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/f625707ffc38c58cc296c8a27ac6c2b3e1c38249
     # REBASE-FIX needed due to: https://source.winehq.org/git/wine.git/commitdiff/cf0e96c6d0edc3a22b8ee5ac423d9b6b652ce0e5
     # FIXED: wine-2.7
-    if wine_version >= Version("1.6") and wine_version < Version("1.7.12"):
-        patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
-            "0001-configure-Support-for-recent-versions-of-OSMesa-pre-wine-1.7.12.patch"))
-    if wine_version >= Version("1.7.12") and wine_version < Version("2.7"):
-        # stable > 2.0.4 already has cherry-pick
-        if wine_version not in [Version("2.0.5")]:
-            patch_apply(wine_variant_source_path, "f625707ffc38c58cc296c8a27ac6c2b3e1c38249")
+    pa(pf("0001-configure-Support-for-recent-versions-of-OSMesa-pre-wine-1.7.12.patch"),
+        min_ver="1.6", max_ver="1.7.12")
+    pa("f625707ffc38c58cc296c8a27ac6c2b3e1c38249", min_ver="1.7.12", max_ver="2.7",
+        exclude=["2.0.5"])  # stable > 2.0.4
 
     # backport for prelink support
     # winegcc: Set the LDDLLFLAGS according to the target platform.
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/2374cd52a72d685d4f7ddb88456a846e6396415f
     # FIXED: wine-1.7.1
-    if wine_version >= Version("1.5.30") and wine_version < Version("1.7.1"):
-        patch_apply(wine_variant_source_path, "2374cd52a72d685d4f7ddb88456a846e6396415f")
+    pa("2374cd52a72d685d4f7ddb88456a846e6396415f", min_ver="1.5.30", max_ver="1.7.1")
     # configure: WARNING: prelink not found, base address of core dlls won't be set correctly.
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/a35f9a13a80fa93c251e12402a73a38a89ec397f
     # FIXED: wine-1.7.54
-    if wine_version >= Version("1.5.30") and wine_version < Version("1.7.54"):
-        patch_apply(wine_variant_source_path, "a35f9a13a80fa93c251e12402a73a38a89ec397f")
+    pa("a35f9a13a80fa93c251e12402a73a38a89ec397f", min_ver="1.5.30", max_ver="1.7.54")
 
     # Fix build failure ('major' undefined) in glibc 2.28.
     # ERROR: server/fd.c:922:9: warning: implicit declaration of function 'major' [-Wimplicit-function-declaration]
@@ -759,14 +757,11 @@ def main():
     #         collect2: error: ld returned 1 exit status
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/ca8a08606d3f0900b3f4aa8f2e6547882a22dba8
     # FIXED: wine-1.9.9
-    if wine_version >= Version("1.7.44") and wine_version < Version("1.9.9"):
-        # stable > 1.8.2 already has cherry-pick as d133be20b15f0656430e48ff681fd6bab786528c
-        if wine_version not in [Version("1.8.3"), Version("1.8.4"), Version("1.8.5"), Version("1.8.6"), Version("1.8.7")]:
-           patch_apply(wine_variant_source_path, "ca8a08606d3f0900b3f4aa8f2e6547882a22dba8")
+    pa("ca8a08606d3f0900b3f4aa8f2e6547882a22dba8", min_ver="1.7.44", max_ver="1.9.9",
+        exclude=["1.8.3", "1.8.4", "1.8.5", "1.8.6", "1.8.7"])  # stable > 1.8.2: d133be20b15
     # REBASE-FIX needed for ca8a08606d3f0900b3f for older Wine versions
-    if wine_version < Version("1.7.44"):
-        patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
-            "0001-configure-Add-AC_HEADER_MAJOR-to-find-where-major-is-pre-wine-1.7.44.patch"))
+    pa(pf("0001-configure-Add-AC_HEADER_MAJOR-to-find-where-major-is-pre-wine-1.7.44.patch"),
+        max_ver="1.7.44")
 
     # Fix build failure for glibc 2.30+
     # ERROR: dlls/ntdll/directory.c:145:19: error: conflicting types for 'getdents64'
@@ -782,18 +777,14 @@ def main():
     # Intermediate fixup because custom patch doesn't apply cleanly on older Wine versions
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/606c88a348fa240359a25aa5a3659a0b41ee0cb4
     if wine_version >= Version("1.5.11"):
-        if wine_version < Version("1.5.23"):
-            patch_apply(wine_variant_source_path, "606c88a348fa240359a25aa5a3659a0b41ee0cb4")
+        pa("606c88a348fa240359a25aa5a3659a0b41ee0cb4", max_ver="1.5.23")
         # Intermediate fixup because custom patch doesn't apply cleanly on older Wine versions
         # GIT: https://source.winehq.org/git/wine.git/commitdiff/3ae113a957d396d400a88259634e2870368f307b
-        if wine_version < Version("1.7.26"):
-            patch_apply(wine_variant_source_path, "3ae113a957d396d400a88259634e2870368f307b")
-        if wine_version < Version("1.9.10"):
-            patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
-                "0001-ntdll-directory-getdents64-conflicts-with-newer-glibc-pre-wine-1.9.10.patch"))
+        pa("3ae113a957d396d400a88259634e2870368f307b", max_ver="1.7.26")
+        pa(pf("0001-ntdll-directory-getdents64-conflicts-with-newer-glibc-pre-wine-1.9.10.patch"),
+            max_ver="1.9.10")
     else:
-        patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
-            "0001-ntdll-directory-getdents64-conflicts-with-newer-glibc-pre-wine-1.5.11.patch"))
+        pa(pf("0001-ntdll-directory-getdents64-conflicts-with-newer-glibc-pre-wine-1.5.11.patch"))
  
     # Freetype 2.8.1 build failures
     # ERROR: ../tools/sfnt2fon/sfnt2fon -o coure.fon .../mainline-src-2.17/fonts/courier.ttf -d 128 13,1252,8
@@ -804,66 +795,46 @@ def main():
     #      https://source.winehq.org/git/wine.git/commitdiff/89e79d8144308a24676ef069d567a14655985b0c
     # FIXED: wine-2.18
     if wine_version >= Version("1.7.12") and wine_version < Version("2.18"):
-        # stable > 2.0.2 already has cherry-pick
-        if wine_version not in [Version("2.0.3"), Version("2.0.4"), Version("2.0.5")]:
-            patch_apply(wine_variant_source_path, "89e79d8144308a24676ef069d567a14655985b0c")
+        pa("89e79d8144308a24676ef069d567a14655985b0c", exclude=["2.0.3", "2.0.4", "2.0.5"])  # stable > 2.0.2
     if wine_version < Version("2.18"):
-        if wine_version < Version("1.5.16"):
-            patch_apply(wine_variant_source_path, "8ef70039d366bf45900c7e7999767be2ccf9704c")
-            patch_apply(wine_variant_source_path, "7cd8dc6bf2b0d81338db9a6d13669b2f31da33d8")
-        # stable > 2.0.2 already has cherry-pick
-        if wine_version not in [Version("2.0.3"), Version("2.0.4"), Version("2.0.5")]:
-            patch_apply(wine_variant_source_path, "d82321006de92dcd74465c905121618a76eae76a")
+        pa("8ef70039d366bf45900c7e7999767be2ccf9704c", max_ver="1.5.16")
+        pa("7cd8dc6bf2b0d81338db9a6d13669b2f31da33d8", max_ver="1.5.16")
+        pa("d82321006de92dcd74465c905121618a76eae76a", exclude=["2.0.3", "2.0.4", "2.0.5"])  # stable > 2.0.2
     if wine_version >= Version("1.7.12") and wine_version < Version("2.18"):
-        patch_apply(wine_variant_source_path, "7ea82a02079d1600191743cc2c148955efe725fb")
-        # stable > 2.0.2 already has cherry-pick
-        if wine_version not in [Version("2.0.3"), Version("2.0.4"), Version("2.0.5")]:
-            bin_patch_apply(wine_variant_source_path, "40166848a7944383a4cfdaac9b18bd03fbb2b4f9")
+        pa("7ea82a02079d1600191743cc2c148955efe725fb")
+        pa("40166848a7944383a4cfdaac9b18bd03fbb2b4f9", binary=True,
+            exclude=["2.0.3", "2.0.4", "2.0.5"])  # stable > 2.0.2
     # REBASE-FIX needed for 7ea82a02079d16 and 40166848a7944383a for older Wine versions
     # Apply prerequisite patches on older Wine versions because a326e29144b74c0b3a doesn't apply cleanly
-    if wine_version < Version("1.4-rc1"):
-        bin_patch_apply(wine_variant_source_path, "3e6199904f4fc2bf1612f210e07e18435a46a38f")
-        bin_patch_apply(wine_variant_source_path, "5d2b9eb9d3e15c3787571000e6a75673a42a0c49")
-        bin_patch_apply(wine_variant_source_path, "a926bfdb061ffcdc3c6f88b29fca614f9f12fa78")
-        bin_patch_apply(wine_variant_source_path, "4b71072b861cc396c4c50806db034f98869e2cc1")
-    if wine_version < Version("1.5.2"):
-        if wine_version != Version("1.4.1"):
-            # Wine 1.4.1 has this as cherry-pick:
-            # https://source.winehq.org/git/wine.git/commitdiff/1823a4ae52b970436943760f028e2c154fd9985d
-            bin_patch_apply(wine_variant_source_path, "4f819f8efcd08e29a1a7650300e204839b43af2c")
-        bin_patch_apply(wine_variant_source_path, "fc42bfe60f3a29c4ce0ed47eb03cc3125be904fd")
-    if wine_version < Version("1.5.16"):
-        bin_patch_apply(wine_variant_source_path, "679385fd1cd2c405ac0d3745863d827293a3b445")
-        bin_patch_apply(wine_variant_source_path, "673617ee4eb15aa778859d3bcc227e8d8a514e01")
-    if wine_version < Version("1.5.18"):
-        bin_patch_apply(wine_variant_source_path, "e070173ac6316cd9afc2755087d8e6b95b6cdafe")
-        bin_patch_apply(wine_variant_source_path, "1a6e9d4a50ec4a1a5464ca9c3bb02921d50eb777")
-    if wine_version < Version("1.5.20"):
-        bin_patch_apply(wine_variant_source_path, "9d71d29f26a6f89d4e603c60e355d2ed39153b7f")
-    if wine_version < Version("1.5.25"):
-        bin_patch_apply(wine_variant_source_path, "1b17f0fd5ded290a332260cad963dac53c08609f")
-    if wine_version < Version("1.5.28"):
-        bin_patch_apply(wine_variant_source_path, "6eaa345261fad0e0a0e04f265ce6f731302ed674")
-        bin_patch_apply(wine_variant_source_path, "c4408e0b621b99115247386e7095231be7e1045d")
-    if wine_version < Version("1.5.31"):
-        patch_apply(wine_variant_source_path, "d29f6c41eb13e647a311091956af3131633e7eda")
-        bin_patch_apply(wine_variant_source_path, "3f0e3ef6b4f422d0528d8031bbad3727face17dd")
-        bin_patch_apply(wine_variant_source_path, "8e2cd615c3dc884dc76bd75a77d35fc1fcaf8217")
-    if wine_version < Version("1.6-rc2"):
-        bin_patch_apply(wine_variant_source_path, "121f82bff7665794be6fee841ddfda6973cc7c46")
-        bin_patch_apply(wine_variant_source_path, "2fd3ec7d068ef925e5720222e92cfda4f6badd2a")
-    if wine_version < Version("1.6-rc5"):
-        bin_patch_apply(wine_variant_source_path, "74b2cb58f7f1192d6b0a7c1bc31a64eb92ccaa86")
-        bin_patch_apply(wine_variant_source_path, "66f641896b8056a818b06f07055d1161c36941c1")
-        bin_patch_apply(wine_variant_source_path, "eb29e639e579535009a4626fede64e3cf34e7009")
-        bin_patch_apply(wine_variant_source_path, "994f74fb46285130cc63784449176c748cfdfaaf")
-        bin_patch_apply(wine_variant_source_path, "7983df22cfd97399575652e72c90203597a818a7")
-        bin_patch_apply(wine_variant_source_path, "80a17baf20da4620394f8832f6221edf45b7a0f0")
+    pa("3e6199904f4fc2bf1612f210e07e18435a46a38f", binary=True, max_ver="1.4-rc1")
+    pa("5d2b9eb9d3e15c3787571000e6a75673a42a0c49", binary=True, max_ver="1.4-rc1")
+    pa("a926bfdb061ffcdc3c6f88b29fca614f9f12fa78", binary=True, max_ver="1.4-rc1")
+    pa("4b71072b861cc396c4c50806db034f98869e2cc1", binary=True, max_ver="1.4-rc1")
+    # Wine 1.4.1 has this as cherry-pick: https://source.winehq.org/git/wine.git/commitdiff/1823a4ae52b970436943760f028e2c154fd9985d
+    pa("4f819f8efcd08e29a1a7650300e204839b43af2c", binary=True, max_ver="1.5.2", exclude=["1.4.1"])
+    pa("fc42bfe60f3a29c4ce0ed47eb03cc3125be904fd", binary=True, max_ver="1.5.2")
+    pa("679385fd1cd2c405ac0d3745863d827293a3b445", binary=True, max_ver="1.5.16")
+    pa("673617ee4eb15aa778859d3bcc227e8d8a514e01", binary=True, max_ver="1.5.16")
+    pa("e070173ac6316cd9afc2755087d8e6b95b6cdafe", binary=True, max_ver="1.5.18")
+    pa("1a6e9d4a50ec4a1a5464ca9c3bb02921d50eb777", binary=True, max_ver="1.5.18")
+    pa("9d71d29f26a6f89d4e603c60e355d2ed39153b7f", binary=True, max_ver="1.5.20")
+    pa("1b17f0fd5ded290a332260cad963dac53c08609f", binary=True, max_ver="1.5.25")
+    pa("6eaa345261fad0e0a0e04f265ce6f731302ed674", binary=True, max_ver="1.5.28")
+    pa("c4408e0b621b99115247386e7095231be7e1045d", binary=True, max_ver="1.5.28")
+    pa("d29f6c41eb13e647a311091956af3131633e7eda", max_ver="1.5.31")
+    pa("3f0e3ef6b4f422d0528d8031bbad3727face17dd", binary=True, max_ver="1.5.31")
+    pa("8e2cd615c3dc884dc76bd75a77d35fc1fcaf8217", binary=True, max_ver="1.5.31")
+    pa("121f82bff7665794be6fee841ddfda6973cc7c46", binary=True, max_ver="1.6-rc2")
+    pa("2fd3ec7d068ef925e5720222e92cfda4f6badd2a", binary=True, max_ver="1.6-rc2")
+    pa("74b2cb58f7f1192d6b0a7c1bc31a64eb92ccaa86", binary=True, max_ver="1.6-rc5")
+    pa("66f641896b8056a818b06f07055d1161c36941c1", binary=True, max_ver="1.6-rc5")
+    pa("eb29e639e579535009a4626fede64e3cf34e7009", binary=True, max_ver="1.6-rc5")
+    pa("994f74fb46285130cc63784449176c748cfdfaaf", binary=True, max_ver="1.6-rc5")
+    pa("7983df22cfd97399575652e72c90203597a818a7", binary=True, max_ver="1.6-rc5")
+    pa("80a17baf20da4620394f8832f6221edf45b7a0f0", binary=True, max_ver="1.6-rc5")
     # REBASE-FIX for 7ea82a02079d16 and 40166848a7944383a for older Wine versions
-
-    if wine_version < Version("1.7.12"):
-        bin_patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
-            "0001-fonts-Fix-freetype-2.8.1-build-failures-pre-wine-1.7.12.patch"))
+    pa(pf("0001-fonts-Fix-freetype-2.8.1-build-failures-pre-wine-1.7.12.patch"),
+        binary=True, max_ver="1.7.12")
 
     # wpcap: Fix compilation with recent pcap/pcap.h versions.
     # ERROR: In file included from .../include/winsock2.h:50,
@@ -871,10 +842,8 @@ def main():
     #        .../include/ws2def.h:60:19: error: redefinition of 'struct sockaddr_storage'
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/40c9b46500c3606e966d5404d45b68a48609b6ea
     # FIXED: wine-4.3
-    if wine_version >= Version("1.7.25") and wine_version < Version("4.3"):
-        # stable > 4.0.1 already has cherry-pick as 2a532f4809fc0328877c1f8219609c526daaba8b
-        if wine_version not in [Version("4.0.1"), Version("4.0.2"), Version("4.0.3"), Version("4.0.4")]:
-            patch_apply(wine_variant_source_path, "40c9b46500c3606e966d5404d45b68a48609b6ea")
+    pa("40c9b46500c3606e966d5404d45b68a48609b6ea", min_ver="1.7.25", max_ver="4.3",
+        exclude=["4.0.1", "4.0.2", "4.0.3", "4.0.4"])  # stable > 4.0.1: 2a532f4809fc
 
     # winealsa.drv: Fix build with alsa-lib >= 1.2.15 where 'interface' is used as a parameter
     # name in /usr/include/alsa/error.h.  Wine's objbase.h defines '#define interface struct'
@@ -886,14 +855,10 @@ def main():
     # mmdevdrv.c was introduced in wine-1.3.19 and always included asoundlib directly.
     # midi.c got a direct asoundlib include in wine-1.3.30; before that it used alsa.h which
     # already carried '#undef interface' (upstream commit 33f4108b693, 2005).
-    if wine_version >= Version("1.3.19") and wine_version < Version("7.5"):
-        patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
-            "0001-winealsa.drv-undef-interface-before-ALSA-includes-pre-wine-7.5.patch"),
-            exclude_pattern="*/midi.c")
-    if wine_version >= Version("1.3.30") and wine_version < Version("7.5"):
-        patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
-            "0001-winealsa.drv-undef-interface-before-ALSA-includes-pre-wine-7.5.patch"),
-            exclude_pattern="*/mmdevdrv.c")
+    pa(pf("0001-winealsa.drv-undef-interface-before-ALSA-includes-pre-wine-7.5.patch"),
+        min_ver="1.3.19", max_ver="7.5", exclude_pattern="*/midi.c")
+    pa(pf("0001-winealsa.drv-undef-interface-before-ALSA-includes-pre-wine-7.5.patch"),
+        min_ver="1.3.30", max_ver="7.5", exclude_pattern="*/mmdevdrv.c")
 
     # loader/preloader build failure with GCC 10.x optimizing wld_memset() into a memset(3) call.
     # ERROR:  /usr/bin/ld: preloader.o: in function `wld_memset':
@@ -902,17 +867,15 @@ def main():
     #          make[1]: *** [Makefile:335: wine64-preloader] Error 1
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/a6fdf73233d3df4435680d921f68089630bc9c64
     # FIXED: wine-1.5.21
-    if wine_version < Version("1.5.21"):
-        patch_apply(wine_variant_source_path, "a6fdf73233d3df4435680d921f68089630bc9c64")
+    pa("a6fdf73233d3df4435680d921f68089630bc9c64", max_ver="1.5.21")
 
     # /usr/bin/ld: ios.o: relocation R_X86_64_32 against symbol `basic_streambuf_char_overflow'
     #          can not be used when making a shared object; recompile with -fPIC
     #       make[1]: *** [Makefile:338: msvcp90.dll.so] Error 2
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/72999eac5b315102d3d7d48aaf6d687ca8ec8d96
     #      https://source.winehq.org/git/wine.git/commitdiff/07a9909ccaea1e9626731c4b259f555877d50bb2
-    if wine_version < Version("1.3.35"):
-        patch_apply(wine_variant_source_path, "07a9909ccaea1e9626731c4b259f555877d50bb2")
-        patch_apply(wine_variant_source_path, "72999eac5b315102d3d7d48aaf6d687ca8ec8d96")
+    pa("07a9909ccaea1e9626731c4b259f555877d50bb2", max_ver="1.3.35")
+    pa("72999eac5b315102d3d7d48aaf6d687ca8ec8d96", max_ver="1.3.35")
 
     # libxml2 fixes
     #  ../dlls/msxml3/mxwriter.c:412:60: error: invalid use of incomplete typedef aEUR~xmlBufaEUR(TM) {aka aEUR~struct _xmlBufaEUR(TM)}
@@ -925,20 +888,19 @@ def main():
     #      https://source.winehq.org/git/wine.git/commitdiff/fda8c2177d01c767c020864370cf9dfaf7b6755d
     #      https://source.winehq.org/git/wine.git/commitdiff/35c7c694294d5461b84e18b17b65a99068050e8b
     if wine_version < Version("1.3.35"):
-        patch_apply(wine_variant_source_path, "a4b24978e9dc2e54057552fc2efffbd58cc25d0a")
-        patch_apply(wine_variant_source_path, "197d41156a1a237eb2073524ec36006d6a26ceaa")
-        patch_apply(wine_variant_source_path, "b0f704daaf633d8c713c9212a2ab5dd8a4457e7a")
-        patch_apply(wine_variant_source_path, "d80ee5b3ae36275f813b096576b5beecea2c2d60")
-        patch_apply(wine_variant_source_path, "fda8c2177d01c767c020864370cf9dfaf7b6755d")
-        patch_apply(wine_variant_source_path, "35c7c694294d5461b84e18b17b65a99068050e8b")
+        pa("a4b24978e9dc2e54057552fc2efffbd58cc25d0a")
+        pa("197d41156a1a237eb2073524ec36006d6a26ceaa")
+        pa("b0f704daaf633d8c713c9212a2ab5dd8a4457e7a")
+        pa("d80ee5b3ae36275f813b096576b5beecea2c2d60")
+        pa("fda8c2177d01c767c020864370cf9dfaf7b6755d")
+        pa("35c7c694294d5461b84e18b17b65a99068050e8b")
 
     # ERROR: 'err:msi:MSI_OpenDatabaseW unknown flag (nil)' ... 'err:msi:msi_apply_patch_package
     # Fixup for GCC 9.x/10.x/MinGW
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/cce9a5f124ae6d3fffcc7772cab6523f09a1e3d1
     # FIXED: wine-4.20
     # MSI changes in Wine 1.7.38 and 1.7.39 make patch/rebase way too much effort hence skip fix below
-    if wine_version >= Version("1.7.40") and wine_version < Version("4.20"):
-        patch_apply(wine_variant_source_path, "cce9a5f124ae6d3fffcc7772cab6523f09a1e3d1")
+    pa("cce9a5f124ae6d3fffcc7772cab6523f09a1e3d1", min_ver="1.7.40", max_ver="4.20")
 
     # ERROR: /usr/bin/ld: chain.o:../dlls/crypt32/crypt32_private.h:155: multiple definition of `hInstance';
     #        cert.o:../dlls/crypt32/crypt32_private.h:155: first defined here
@@ -950,13 +912,11 @@ def main():
 
     # mpg123: Fix compilation with clang.
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/981306c1f01112719850439a74e13693dfa6d3a4
-    if wine_version == Version("6.20"):
-        patch_apply(wine_variant_source_path, "981306c1f01112719850439a74e13693dfa6d3a4")
+    pa("981306c1f01112719850439a74e13693dfa6d3a4", exact="6.20")
 
     # opencl: Fix compilation on MSVC targets.
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/a91d6e9eae71a0ed0ddeac3d571704fd3e47b3c5
-    if wine_version >= Version("6.5") and wine_version < Version("6.18"):
-        patch_apply(wine_variant_source_path, "a91d6e9eae71a0ed0ddeac3d571704fd3e47b3c5")
+    pa("a91d6e9eae71a0ed0ddeac3d571704fd3e47b3c5", min_ver="6.5", max_ver="6.18")
 
     # needed for erroneous FREETYPEINCL
     if wine_version < Version("1.5.2"):
@@ -969,8 +929,7 @@ def main():
     #        make: *** [Makefile:1843: dlls/advpack/libadvpack.delay.a] Error 1
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/f29d4a43e203303c2d4aaec388f281d01f17764c
     # FIXED: wine-5.3
-    if wine_version == Version("5.2"):
-        patch_apply(wine_variant_source_path, "f29d4a43e203303c2d4aaec388f281d01f17764c")
+    pa("f29d4a43e203303c2d4aaec388f281d01f17764c", exact="5.2")
 
     # ERROR: /usr/bin/ld: dlls/dnsapi/libresolv.o: in function `resolv_query':
     #        .../dlls/dnsapi/libresolv.c:897: undefined reference to `ns_initparse'
@@ -978,8 +937,7 @@ def main():
     # URL: https://bugs.winehq.org/show_bug.cgi?id=51635
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/a3bbf5137707abb548ff642826992b7069bef1de
     # FIXED: wine-6.16
-    if wine_version >= Version("6.6") and wine_version < Version("6.16"):
-        patch_apply(wine_variant_source_path, "a3bbf5137707abb548ff642826992b7069bef1de")
+    pa("a3bbf5137707abb548ff642826992b7069bef1de", min_ver="6.6", max_ver="6.16")
 
     # ERROR: ../../tools/winegcc/winegcc -o ntdll.dll.so -B../../tools/winebuild -m64 -fasynchronous-unwind-tables -shared
     #        mainline-src-1.7.45/dlls/ntdll/ntdll.spec \
@@ -987,8 +945,7 @@ def main():
     #        /usr/bin/ld: signal_x86_64.o: in function `libunwind_virtual_unwind':
     #        mainline-src-1.7.45/dlls/ntdll/signal_x86_64.c:1554: undefined reference to `_Ux86_64_getcontext'
     # GIT: https://source.winehq.org/git/wine.git/commitdiff/36a9f9dd05c3b9df77c44c91663e9bd6cae1c848
-    if wine_version == Version("1.7.45"):
-        patch_apply(wine_variant_source_path, "36a9f9dd05c3b9df77c44c91663e9bd6cae1c848")
+    pa("36a9f9dd05c3b9df77c44c91663e9bd6cae1c848", exact="1.7.45")
 
     # ERROR: In file included from dlls/wldap32/add.c:33:
     #              dlls/wldap32/winldap_private.h:306:13: error:
@@ -1004,7 +961,7 @@ def main():
     # FIXED: wine-6.7
     if wine_version < Version("6.7"):
         # Can't use commit, it's too invasive and https://bugs.winehq.org/attachment.cgi?id=70064 isn't in git tree
-        #     patch_apply(wine_variant_source_path, "8db46756ca91695c7242e05d24a3e5ec4340c10c")
+        #     pa("8db46756ca91695c7242e05d24a3e5ec4340c10c")
         configure_options += " --without-ldap"
 
     # ERROR: dlls/win32u/sysparams.c: In function 'init_yesno_entry':
@@ -1013,9 +970,8 @@ def main():
     # GIT: https://gitlab.winehq.org/wine/wine/-/commit/5f8673bc4f90aac1b52f47bcb79861f385915672
     # FIXED: wine-10.0-rc1
     if wine_version >= Version("7.0-rc1") and wine_version < Version("10.0-rc1"):
-        patch_apply(wine_variant_source_path, "5f8673bc4f90aac1b52f47bcb79861f385915672", hunks="1-7")
-        if wine_version >= Version("7.21") and wine_version < Version("10.0-rc1"):
-            patch_apply(wine_variant_source_path, "5f8673bc4f90aac1b52f47bcb79861f385915672", hunks="8")
+        pa("5f8673bc4f90aac1b52f47bcb79861f385915672", hunks="1-7")
+        pa("5f8673bc4f90aac1b52f47bcb79861f385915672", min_ver="7.21", max_ver="10.0-rc1", hunks="8")
 
     # ERROR: libs/faudio/src/FACT.c:2300:21: error: call to undeclared library function 'alloca' with type 'void *(unsigned long long)';
     #    ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
@@ -1026,8 +982,7 @@ def main():
     #        |                          ^
     # GIT: https://gitlab.winehq.org/wine/wine/-/commit/8f8b802e12d458fe97b4c0ddb11e2e5c353c354d
     # FIXED: wine-7.8
-    if wine_version >= Version("6.20") and wine_version < Version("7.8"):
-        patch_apply(wine_variant_source_path, "8f8b802e12d458fe97b4c0ddb11e2e5c353c354d")
+    pa("8f8b802e12d458fe97b4c0ddb11e2e5c353c354d", min_ver="6.20", max_ver="7.8")
 
     # ERROR: libs/vkd3d/libs/vkd3d-shader/spirv.c:1083:13: error: incompatible function pointer types passing
     #      'uint32_t (struct vkd3d_spirv_builder *, uint32_t, SpvDim, uint32_t, uint32_t, uint32_t, uint32_t, SpvImageFormat)'
@@ -1038,8 +993,7 @@ def main():
     #      |             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # GIT: https://gitlab.winehq.org/wine/wine/-/commit/7ee17a15e0945d238848e767204010e5cacbf77c
     # FIXED: 7.16
-    if wine_version >= Version("7.4") and wine_version < Version("7.16"):
-        patch_apply(wine_variant_source_path, "7ee17a15e0945d238848e767204010e5cacbf77c")
+    pa("7ee17a15e0945d238848e767204010e5cacbf77c", min_ver="7.4", max_ver="7.16")
 
     # ERROR: tools/winegcc/winegcc -o dlls/davclnt/x86_64-windows/davclnt.dll --wine-objdir . -b x86_64-w64-mingw32 -Wl,--wine-builtin -shared \
     #   ...
@@ -1047,17 +1001,14 @@ def main():
     #   clang: error: no such file or directory: 'libgcc.a'
     # GIT: https://gitlab.winehq.org/wine/wine/-/commit/0872e3c1ff242dc17f18749efb1e285c1155399b
     # FIXED: wine-9.21
-    if wine_version >= Version("9.0") and wine_version < Version("9.21"):
-        patch_apply(wine_variant_source_path, "0872e3c1ff242dc17f18749efb1e285c1155399b")
+    pa("0872e3c1ff242dc17f18749efb1e285c1155399b", min_ver="9.0", max_ver="9.21")
 
     # ERROR: ../tools/makedep  -C/mainline-src-1.7.8/tools -Smainline-src-1.7.8 -T..  -I/usr/include/freetype2
     #      -I/usr/include/libpng16 -DWITH_GZFILEOP -I/usr/include/harfbuzz -I/usr/include/glib-2.0
     #      -I/usr/lib64/glib-2.0/include -I/usr/include/sysprof-6  fnt2fon.c make_ctests.c make_xftmpl.c makedep.c sfnt2fnt.c
     #                winemaker.de.UTF-8.man.in winemaker.fr.UTF-8.man.in winemaker.man.in
     # Unknown option '-DWITH_GZFILEOP'
-    if wine_version < Version("1.7.9"):
-        patch_apply(wine_variant_source_path, os.path.join(wine_patches_path,
-            "0001-tools-makedep-ignore-erroneous-d-argument-pre-wine-1.7.9.patch"))
+    pa(pf("0001-tools-makedep-ignore-erroneous-d-argument-pre-wine-1.7.9.patch"), max_ver="1.7.9")
 
     ##################################################################
     # run 'autoreconf' and 'tools/make_requests' if requested
