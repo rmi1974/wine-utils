@@ -177,7 +177,7 @@ RUN rpm -ivh --replacefiles unixODBC-devel-*.i686.rpm
 # --- NTLM support ---
 RUN dnf -y install \
     samba-winbind samba-winbind-clients \
-    && dnf clean all && rm -rf /var/cache/dnfll
+    && dnf clean all && rm -rf /var/cache/dnf
 
 # --- Prompt customization ---
 RUN echo 'export PROMPT_COMMAND="PS1=\"(wine-docker) \u:\w\\$ \""' > /etc/profile.d/prompt.sh
