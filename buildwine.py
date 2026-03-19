@@ -31,7 +31,7 @@ def run_command(command, cwd=None, env=None):
     Parameters:
         command (str): Linux shell command.
         cwd (str): Working directory for the command.
-        env (str): Custom shell environment for the intermediate shell.
+        env (dict): Custom shell environment for the intermediate shell.
     Returns:
         if executed process exit code is non-zero, exits with a clean error message.
 
@@ -51,9 +51,9 @@ def run_command_stdout(command, cwd=None, env=None):
     Parameters:
         command (str): Linux shell command.
         cwd (str): Working directory for the command.
-        env (str): Custom shell environment for the intermediate shell.
+        env (dict): Custom shell environment for the intermediate shell.
     Returns:
-        stdout as string
+        stdout as string; prints a warning to stderr if the command exits with non-zero.
 
     """
     print(f"[*] Running: '{command}' (cwd='{cwd}')")
