@@ -71,7 +71,7 @@ wine_docker_run
 
 This starts an interactive container session with:
 
-* DISPLAY forwarding via X11 for GUI apps
+* DISPLAY forwarding via X11 for GUI apps.
 * PulseAudio mounting for sound.
 * home directory and current directory mounted for seamless development.
 
@@ -106,17 +106,7 @@ export PATH=$PWD/llvm-mingw-20251104-ucrt-ubuntu-22.04-x86_64/bin:$PATH
 ```
 
 ```bash
-clang -v
-
-clang version 21.1.5 (https://github.com/llvm/llvm-project.git 8e2cd28cd4ba46613a46467b0c91b1cabead26cd)
-Target: x86_64-unknown-linux-gnu
-Thread model: posix
-InstalledDir: /home/rmi1974/projects/wine/llvm-mingw-20251104-ucrt-ubuntu-22.04-x86_64/bin
-Found candidate GCC installation: /usr/lib/gcc/x86_64-redhat-linux/15
-Selected GCC installation: /usr/lib/gcc/x86_64-redhat-linux/15
-Candidate multilib: .;@m64
-Candidate multilib: 32;@m32
-Selected multilib: .;@m64
+clang --version
 ```
 
 Now run `buildwine.py` as usual. The `llvm-mingw` toolchain will be automatically detected.
@@ -135,13 +125,13 @@ Build a specific Wine release:
 ./buildwine.py --version=8.5
 ```
 
-Build Wine-Staging variant of a release:
+Build Wine-Staging variant of a release (applies the Wine-Staging patchset on top of mainline):
 
 ```bash
 ./buildwine.py --variant=staging --version=9.15
 ```
 
-Build a custom variant (e.g., for Git bisect):
+Build a custom variant (clones mainline into a separate `custom-src` tree so you can apply your own patches without touching mainline — useful for Git bisect):
 
 ```bash
 ./buildwine.py --variant=custom
@@ -153,6 +143,8 @@ Build a custom variant (e.g., for Git bisect):
 - tests are disabled by default: enable with `--enable-tests`
 - Wine-Mono is disabled on non-release builds (no exact Wine release tag on git checkout): enable with `--enable-mscoree`
 - debugging: to diagnose build failures deterministically, use `--jobs=1`
+
+Run `./buildwine.py --help` for the full list of options.
 
 ### Building ranges of Wine releases
 
@@ -169,13 +161,7 @@ done
 ## Running Wine inside the container
 
 After building, applications can be run from inside the same container.
-The build script will output the exact Wine install path for each build.
-Make note of it. You have to set it explicitly to use a particular Wine build.
-
-```bash
-# Wine 10.0 mainline build
-export PATH=<basepath>/wine/mainline-install-10.0-x86_64/bin/:$PATH
-```
+The build script prints the exact `export PATH=...` command to run at the end of each build.
 
 ```bash
 # Example: run Wine's notepad
@@ -193,9 +179,11 @@ Restart with fresh `WINEPREFIX` in such cases. Reuse prefixes at own risk.
 
 The script maintains a separation of sources, build and install artifacts across variants and architectures:
 
-Sources: mainline-src-*, staging-src-*, custom-src, plus git reference mirrors
-Builds: mainline-build-*, staging-build-*, custom-build-* for each arch and version
-Installs: mainline-install-*, staging-install-*, custom-install-*
+| Directory pattern | Contents |
+|---|---|
+| `mainline-src-*`, `staging-src-*`, `custom-src` | Source trees + git reference mirrors |
+| `mainline-build-*`, `staging-build-*`, `custom-build-*` | Build artifacts per arch and version |
+| `mainline-install-*`, `staging-install-*`, `custom-install-*` | Install trees |
 
 ---
 
