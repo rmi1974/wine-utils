@@ -43,7 +43,7 @@ def run_command(command, cwd=None, env=None):
         subprocess.run(f"set -o pipefail && {command}", cwd=cwd, env=env, check=True, shell=True,
                        stderr=sys.stderr, stdout=sys.stdout, encoding="utf8")
     except subprocess.CalledProcessError as e:
-        sys.exit(f"Command failed (exit {e.returncode}): {command}")
+        sys.exit(f"[!] Command failed (exit {e.returncode}): {command}")
 
 def run_command_stdout(command, cwd=None, env=None):
     """Run the specified command in a subprocess shell and return stdout
@@ -59,8 +59,11 @@ def run_command_stdout(command, cwd=None, env=None):
     print(f"[*] Running: '{command}' (cwd='{cwd}')")
 
     # Some commands involve 'tee' (pipelines) hence prefix with 'pipefail' to capture failure as well
-    return subprocess.run(f"set -o pipefail && {command}", stdout=subprocess.PIPE,
-                          cwd=cwd, env=env, shell=True, encoding="utf8").stdout.rstrip(os.linesep)
+    result = subprocess.run(f"set -o pipefail && {command}", stdout=subprocess.PIPE,
+                            cwd=cwd, env=env, shell=True, encoding="utf8")
+    if result.returncode != 0:
+        print(f"[!] Warning: '{command}' exited with code {result.returncode}", file=sys.stderr)
+    return result.stdout.rstrip(os.linesep)
 
 def patch_apply(source_path, commit_id_or_patchfile, exclude_pattern="", hunks=""):
     """ Apply a patch from Git commit into current branch using 'patch' tool.
@@ -86,11 +89,11 @@ def patch_apply(source_path, commit_id_or_patchfile, exclude_pattern="", hunks="
         )
         patchfile = os.path.join(source_path, patchfile_rel) if patchfile_rel else None
         if not patchfile or not os.path.exists(os.path.normpath(patchfile)):
-            sys.exit(f"Patch extraction of '{commit_id_or_patchfile}' failed, aborting!")
+            sys.exit(f"[!] Patch extraction of '{commit_id_or_patchfile}' failed, aborting!")
     else:
         patchfile = os.path.normpath(commit_id_or_patchfile)
         if not os.path.exists(patchfile):
-            sys.exit(f"Local patch file '{patchfile}' not found, aborting!")
+            sys.exit(f"[!] Local patch file '{patchfile}' not found, aborting!")
 
     # build filterdiff command
     filter_opts = "-p1"
@@ -104,7 +107,7 @@ def patch_apply(source_path, commit_id_or_patchfile, exclude_pattern="", hunks="
         source_path
     )
     if any(re.findall(r'failed|error:', patch_stdout, re.IGNORECASE)):
-        sys.exit(f"Patch '{patchfile}' failed with output '{patch_stdout}', aborting!")
+        sys.exit(f"[!] Patch '{patchfile}' failed with output '{patch_stdout}', aborting!")
     # "Reversed (or previously applied) patch detected! Skipping patch." is not an error
 
 def bin_patch_apply(source_path, commit_id_or_patchfile, exclude_pattern=""):
@@ -131,13 +134,13 @@ def bin_patch_apply(source_path, commit_id_or_patchfile, exclude_pattern=""):
         patchfile = os.path.normpath(commit_id_or_patchfile)
 
     if not patchfile or not os.path.exists(patchfile):
-        sys.exit(f"Patch extraction of '{commit_id_or_patchfile}' failed, aborting!")
+        sys.exit(f"[!] Patch extraction of '{commit_id_or_patchfile}' failed, aborting!")
 
     patch_stdout = run_command_stdout(
         f"filterdiff -p1 -x '{exclude_pattern}' < {patchfile} | git apply 2>&1",
         source_path)
     if any(re.findall(r'not apply|error:', patch_stdout, re.IGNORECASE)):
-        sys.exit(f"Git apply '{patchfile}' failed with output '{patch_stdout}', aborting!")
+        sys.exit(f"[!] Git apply '{patchfile}' failed with output '{patch_stdout}', aborting!")
     # "Reversed (or previously applied) patch detected!  Skipping patch." is not an error
 
 def create_config_wrapper(org_config, arg_filter, output_remove):
@@ -155,7 +158,7 @@ def create_config_wrapper(org_config, arg_filter, output_remove):
     # Only enforce existence for the very first binary
     if not os.path.isfile(org_config):
         # If it's not a file yet, assume we're chaining wrappers
-        print(f"Wrapping (chained): {org_config}")
+        print(f"[*] Wrapping (chained): {org_config}")
 
     content = f"""#!/bin/bash
 result=`{org_config} "$@"`
@@ -351,7 +354,7 @@ def main():
                             f"{wine_workspace_path}/{args.variant}-src")
         wine_version = parse_version(stdout)
         if not isinstance(wine_version, Version):
-            sys.exit(f"Unknown Wine version '{args.version}', aborting!")
+            sys.exit(f"[!] Unknown Wine version '{args.version}', aborting!")
     else:
         # no version given but we need one to apply fixups on custom builds
         # also handle case when variant isn't checked out yet
@@ -362,7 +365,7 @@ def main():
                             wine_variant_source_path)
         wine_version = parse_version(stdout)
 
-    print(f"Building Wine {wine_version}")
+    print(f"[*] Building Wine {wine_version}")
 
     # for exporting variables into current shell environment
     my_env = dict(os.environ.copy())
@@ -372,10 +375,10 @@ def main():
 
     # Refuse to enable experimental Wow64 mode on older Wine versions
     if wine_version < Version("9.0") and args.enable_experimental_wow64:
-        sys.exit(f"Experimental Wow64 mode not supported with requested Wine version {wine_version}, aborting!")
+        sys.exit(f"[!] Experimental Wow64 mode not supported with requested Wine version {wine_version}, aborting!")
     # new WoW64 mode builds requires MinGW cross compiler
     if args.enable_experimental_wow64 and args.disable_mingw:
-        sys.exit("Experimental Wow64 mode requires MinGW cross-compiler, aborting!")
+        sys.exit("[!] Experimental Wow64 mode requires MinGW cross-compiler, aborting!")
     # auto-enabled experimental Wow64 mode on all Wine versions >= 10.0,
     # unless explicitly disabled
     if wine_version >= Version("10.0") and not args.disable_experimental_wow64:
@@ -458,7 +461,7 @@ def main():
             wine_install_arch64_pe_dir = "/aarch64-windows"
             wine_install_arch64_so_dir = "/aarch64-unix"
         else:
-            sys.exit(f"Unsupported target architecture '{wine_target_arch}', aborting!")
+            sys.exit(f"[!] Unsupported target architecture '{wine_target_arch}', aborting!")
 
     # common CFLAGS
     wine_cflags_common = "-O2 -g"
@@ -639,7 +642,7 @@ def main():
     # ensure required tools exist
     for tool in ("git", "filterdiff", "patch"):
         if not shutil.which(tool):
-            sys.exit(f"Required tool '{tool}' not found in PATH, aborting!")
+            sys.exit(f"[!] Required tool '{tool}' not found in PATH, aborting!")
 
     pa, pf = make_patch_applier(wine_version, wine_variant_source_path, wine_patches_path)
 
@@ -1075,6 +1078,7 @@ def main():
 
     # don't attempt to build if "configure only" mode requested
     if args.configure_only:
+        print("[*] Configure step complete.")
         sys.exit(0)
 
     ##################################################################
@@ -1120,7 +1124,7 @@ def main():
         run_command(rf"find {wine_build_target_arch32_path} -type f -name '*.pdb' -exec cp -v '{{}}' '{wine_install_prefix}/{wine_install_arch32_pe_dir}' \;")
 
     print(f"""
-    Run the following command to register this Wine variant in environment
+    [*] Run the following command to register this Wine variant in environment
     ----------------------------------------------------------------------
     export PATH={wine_install_prefix}/bin/:$PATH
     ----------------------------------------------------------------------
