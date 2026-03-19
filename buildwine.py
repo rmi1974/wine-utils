@@ -890,13 +890,12 @@ def main():
     #      https://source.winehq.org/git/wine.git/commitdiff/d80ee5b3ae36275f813b096576b5beecea2c2d60
     #      https://source.winehq.org/git/wine.git/commitdiff/fda8c2177d01c767c020864370cf9dfaf7b6755d
     #      https://source.winehq.org/git/wine.git/commitdiff/35c7c694294d5461b84e18b17b65a99068050e8b
-    if wine_version >= Version("1.3.30") and wine_version < Version("1.3.35"):
-        pa("a4b24978e9dc2e54057552fc2efffbd58cc25d0a")
-        pa("197d41156a1a237eb2073524ec36006d6a26ceaa")
-        pa("b0f704daaf633d8c713c9212a2ab5dd8a4457e7a")
-        pa("d80ee5b3ae36275f813b096576b5beecea2c2d60")
-        pa("fda8c2177d01c767c020864370cf9dfaf7b6755d")
-        pa("35c7c694294d5461b84e18b17b65a99068050e8b")
+    pa("a4b24978e9dc2e54057552fc2efffbd58cc25d0a", min_ver="1.3.30", max_ver="1.3.35")
+    pa("197d41156a1a237eb2073524ec36006d6a26ceaa", min_ver="1.3.30", max_ver="1.3.35")
+    pa("b0f704daaf633d8c713c9212a2ab5dd8a4457e7a", min_ver="1.3.30", max_ver="1.3.35")
+    pa("d80ee5b3ae36275f813b096576b5beecea2c2d60", min_ver="1.3.30", max_ver="1.3.35")
+    pa("fda8c2177d01c767c020864370cf9dfaf7b6755d", min_ver="1.3.30", max_ver="1.3.35")
+    pa("35c7c694294d5461b84e18b17b65a99068050e8b", min_ver="1.3.30", max_ver="1.3.35")
 
     # ERROR: 'err:msi:MSI_OpenDatabaseW unknown flag (nil)' ... 'err:msi:msi_apply_patch_package
     # Fixup for GCC 9.x/10.x/MinGW
